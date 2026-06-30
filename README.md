@@ -125,6 +125,78 @@ python -m app.benchmark
 
 The benchmark writes `reports/product_smoke_test.json`. It is a local smoke test, not the official ADTC profiler.
 
+## Phase 4: Real GGUF Model Testing
+
+Phase 4 prepares the project to test real local GGUF models and compare them before choosing the final competition model. It does **not** add NLLB, African-language mode, fine-tuning, LightRAG, cloud APIs, Streamlit, or Gradio. No model is auto-downloaded — place GGUF files under `models/` yourself.
+
+Recommended first models to test manually:
+
+- Qwen2.5-1.5B-Instruct GGUF Q4
+- Llama-3.2-1B-Instruct GGUF Q4
+- SmolLM2-1.7B-Instruct GGUF Q4
+- Gemma-2-2B-it GGUF Q4
+- Llama-3.2-3B-Instruct GGUF Q4 (only if RAM and speed headroom allow)
+
+Workflow:
+
+1. Place the model:
+
+   ```text
+   models/model.gguf
+   ```
+
+2. Run the backend:
+
+   ```bash
+   cd backend
+   uvicorn main:app --host 127.0.0.1 --port 8000
+   ```
+
+3. Run the frontend:
+
+   ```bash
+   cd frontend
+   npm run dev
+   ```
+
+4. Run the product benchmark:
+
+   ```bash
+   cd backend
+   python -m app.benchmark
+   ```
+
+5. Run the model benchmark:
+
+   ```bash
+   cd backend
+   python -m app.model_benchmark
+   ```
+
+   This detects `.gguf` files under `models/`, loads each through `llama-cpp-python`, runs three short prompts, and writes `reports/model_benchmark.json`. With no models present it writes a valid report saying none were found and prints setup instructions. Token-per-second values are `null` when `llama-cpp-python` does not expose token counts cleanly — they are never faked.
+
+6. Run the ADTC profiler in participant mode:
+
+   ```bash
+   ./scripts/run_adtc_profiler_participant.sh
+   ```
+
+   Audit mode and comparison are also available:
+
+   ```bash
+   ./scripts/run_adtc_profiler_audit.sh
+   ./scripts/compare_adtc_reports.sh
+   ```
+
+   These scripts check that `adtc-profiler`, `metadata.json`, and `models/model.gguf` are present, and print a friendly message instead of crashing if anything is missing.
+
+### Reports: internal vs official
+
+- `reports/model_benchmark.json` and `reports/product_smoke_test.json` are **internal development reports** produced by this repo.
+- `reports/submission.json` (and `audit.json` / `verdict.json`) come from the **official ADTC profiler**. Do not claim a profiler pass unless it has actually been run.
+
+Model configuration profiles for candidate models live in `backend/app/model_profiles.py`. See `reports/adtc_profiler_notes.md` for how the measurements relate and the RAM budget (7 GB ceiling, 5.5–6 GB safe product peak).
+
 ## API Endpoints
 
 - `GET /health`: backend/model/index status

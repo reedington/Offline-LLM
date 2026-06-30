@@ -335,6 +335,8 @@ function Workspace(props) {
           status={props.status}
         />
 
+        <ModelReadiness modelReady={props.modelReady} indexReady={props.indexReady} />
+
         <ModelSetupWarning modelReady={props.modelReady} />
 
         <div className="question-box">
@@ -358,6 +360,29 @@ function Workspace(props) {
   );
 }
 
+function ModelReadiness({ modelReady, indexReady }) {
+  return (
+    <div className="model-readiness">
+      <div className="flex items-center gap-3">
+        <Cpu className="h-5 w-5 shrink-0 text-adtc-gold" />
+        <strong>Model readiness</strong>
+        <span className={`model-readiness-pill ${modelReady ? "ok" : "warn"}`}>
+          {modelReady ? "GGUF model found" : "No GGUF model yet"}
+        </span>
+      </div>
+      <ul className="model-readiness-list">
+        <li>
+          Expected model path: <code>models/model.gguf</code>
+        </li>
+        <li>Document indexing works without a model{indexReady ? " (index ready)" : ""}.</li>
+        <li>Chat generation requires a local GGUF model.</li>
+        <li>Recommended first model size: 1B–2B Q4.</li>
+        <li>3B is only for testing if RAM/speed headroom allows.</li>
+      </ul>
+    </div>
+  );
+}
+
 function ModelSetupWarning({ modelReady }) {
   if (modelReady) return null;
 
@@ -366,7 +391,10 @@ function ModelSetupWarning({ modelReady }) {
       <AlertTriangle className="h-5 w-5 shrink-0 text-adtc-gold" />
       <div>
         <strong>No GGUF model found.</strong>
-        <p>Place a small quantized model at models/model.gguf and restart the backend.</p>
+        <p>
+          Place a small quantized model at <code>models/model.gguf</code> and restart the backend. You can still upload
+          and index documents now — only chat generation needs the model.
+        </p>
         <p className="mt-2 text-xs uppercase tracking-[0.16em] text-adtc-gold">
           Qwen2.5-1.5B-Instruct Q4 · Llama-3.2-1B-Instruct Q4 · SmolLM2-1.7B-Instruct Q4
         </p>

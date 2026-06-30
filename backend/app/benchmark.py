@@ -7,7 +7,7 @@ from pathlib import Path
 import psutil
 
 from app.chunking import chunk_documents
-from app.config import INDEX_DIR, MODEL_PATH, PROJECT_ROOT, REPORTS_DIR, SAMPLE_DOCS_DIR, TOP_K
+from app.config import ABSTENTION_MESSAGE, INDEX_DIR, MODEL_PATH, PROJECT_ROOT, REPORTS_DIR, SAMPLE_DOCS_DIR, TOP_K
 from app.document_loader import load_documents
 from app.embeddings import hash_embed
 from app.llm import LlamaCppLLM, ModelNotFoundError
@@ -25,8 +25,10 @@ def main() -> None:
     started = time.perf_counter()
     REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    rss_start_mb = round(process.memory_info().rss / (1024 * 1024), 1)
     eval_items = load_eval_items()
     store, chunks_count, documents = build_or_load_index()
+    rss_after_index_mb = round(process.memory_info().rss / (1024 * 1024), 1)
     embedder = BenchmarkEmbedder()
     llm = LlamaCppLLM()
 
@@ -37,6 +39,7 @@ def main() -> None:
         generation_status = "not_run"
         error = None
 
+        evidence: list = []
         if item["expected_behavior"] == "calculator":
             answer = calculator_answer(item["id"])
             generation_status = "calculator"
@@ -47,11 +50,20 @@ def main() -> None:
                 assistant = RAGAssistant(store, embedder, llm)
                 rag_result = assistant.answer(item["question"], top_k=TOP_K)
                 answer = rag_result["answer"]
+                evidence = rag_result.get("evidence", [])
                 generation_status = "generated"
             except ModelNotFoundError as exc:
                 answer = str(exc)
                 generation_status = "model_missing"
                 error = str(exc)
+
+        abstention_expected = item["expected_behavior"] == "unanswerable"
+        abstained = answer == ABSTENTION_MESSAGE
+        # The structured Answer/Evidence format is present when generation ran
+        # and produced an answer plus evidence (or a clean abstention).
+        has_answer_evidence_format = generation_status == "generated" and (
+            abstained or bool(evidence)
+        )
 
         results.append(
             {
@@ -64,17 +76,31 @@ def main() -> None:
                 "retrieved_count": len(retrieved),
                 "retrieved_sources": [chunk["source_document"] for chunk in retrieved],
                 "answer": answer,
+                "has_answer_evidence_format": has_answer_evidence_format,
+                "abstention_expected": abstention_expected,
+                "abstained": abstained,
+                "abstention_correct": (abstained == abstention_expected)
+                if generation_status == "generated"
+                else None,
                 "error": error,
             }
         )
 
+    rss_end_mb = round(process.memory_info().rss / (1024 * 1024), 1)
     payload = {
         "benchmark": "product_smoke_test",
         "model_path": str(MODEL_PATH),
         "model_exists": MODEL_PATH.exists(),
+        "model_loaded": getattr(llm, "loaded", False),
         "generation_status": "ready" if MODEL_PATH.exists() else "model_missing",
+        "index_ready": bool(getattr(store, "ready", False)),
+        "documents_count": len(documents),
+        "chunks_count": chunks_count,
         "total_latency_ms": int((time.perf_counter() - started) * 1000),
-        "rss_mb": round(process.memory_info().rss / (1024 * 1024), 1),
+        "rss_mb": rss_end_mb,
+        "rss_start_mb": rss_start_mb,
+        "rss_after_index_mb": rss_after_index_mb,
+        "rss_after_generation_mb": rss_end_mb,
         "documents": [document.model_dump() for document in documents],
         "chunks": chunks_count,
         "top_k": TOP_K,

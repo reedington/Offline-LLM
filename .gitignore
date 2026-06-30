@@ -11,6 +11,8 @@ indexes/*
 !indexes/.gitkeep
 reports/*
 !reports/.gitkeep
+!reports/model_benchmark.template.json
+!reports/adtc_profiler_notes.md
 uploads/
 frontend/node_modules/
 frontend/dist/

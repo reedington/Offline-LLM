@@ -157,6 +157,40 @@
     @apply block text-base text-adtc-cream;
   }
 
+  .setup-warning code,
+  .model-readiness code {
+    @apply rounded-md border border-adtc-line bg-adtc-black/50 px-1.5 py-0.5 text-xs text-adtc-gold;
+  }
+
+  .model-readiness {
+    @apply min-w-0 rounded-3xl border border-adtc-line bg-adtc-card/70 p-4 text-sm leading-6 text-adtc-muted;
+  }
+
+  .model-readiness strong {
+    @apply text-base text-adtc-cream;
+  }
+
+  .model-readiness-pill {
+    @apply rounded-full border px-3 py-1 text-xs;
+  }
+
+  .model-readiness-pill.ok {
+    @apply border-adtc-green/40 text-adtc-green;
+  }
+
+  .model-readiness-pill.warn {
+    @apply border-adtc-gold/40 text-adtc-gold;
+  }
+
+  .model-readiness-list {
+    @apply mt-3 grid gap-1.5;
+  }
+
+  .model-readiness-list li {
+    @apply ml-5 min-w-0 list-disc;
+    overflow-wrap: anywhere;
+  }
+
   .empty-state {
     @apply flex min-h-0 min-w-0 items-start gap-3 rounded-3xl border border-adtc-line bg-adtc-black/40 p-4 text-sm leading-6 text-adtc-muted;
     overflow-wrap: anywhere;

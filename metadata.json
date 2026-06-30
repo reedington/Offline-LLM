@@ -5,5 +5,9 @@
   "model_format": "GGUF",
   "runtime": "llama.cpp / llama-cpp-python",
   "task": "offline SME document RAG assistant",
-  "notes": "Place the GGUF model at models/model.gguf before profiling."
+  "version": "0.4.0",
+  "submission_type": "offline-rag-app",
+  "hardware_target": "local CPU laptop, no GPU required",
+  "ram_budget_gb": 7,
+  "notes": "Place the GGUF model at models/model.gguf before profiling. Model name and parameter count are placeholders until the final model is chosen by measured benchmarks."
 }

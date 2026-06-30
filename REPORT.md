@@ -114,6 +114,41 @@ Profiler placeholders:
 - retrieval accuracy notes: TBD
 - abstention behavior notes: TBD
 
+## Phase 4: Model Testing and Profiler Integration
+
+Phase 4 prepares the project to test real local GGUF models and compare them honestly before choosing the final competition model. No NLLB, African-language mode, fine-tuning, LightRAG, cloud APIs, Streamlit, or Gradio were added. No model is auto-downloaded; GGUF files are placed manually under `models/`.
+
+Added tooling:
+
+- `backend/app/model_profiles.py`: candidate model configuration profiles (planning only; files are not required to exist).
+- `backend/app/model_benchmark.py`: loads each GGUF under `models/`, runs three short prompts, and writes `reports/model_benchmark.json`. Safe when no models or no `llama-cpp-python` are present.
+- `scripts/run_adtc_profiler_participant.sh`, `scripts/run_adtc_profiler_audit.sh`, `scripts/compare_adtc_reports.sh`: friendly wrappers around the official ADTC profiler.
+- `reports/model_benchmark.template.json` and `reports/adtc_profiler_notes.md`.
+
+Measurement placeholders (to be filled only with real measured values):
+
+- Selected model: TBD
+- Quantization: TBD
+- Model path: `models/model.gguf`
+- Product benchmark: `reports/product_smoke_test.json`
+- Model benchmark: `reports/model_benchmark.json`
+- ADTC participant report: `reports/submission.json`
+- Tokens/sec: TBD
+- First-token latency: TBD
+- Peak RSS: TBD
+- Product RSS: TBD
+- Thermal status: TBD
+- Decision: TBD
+
+Decision policy:
+
+- We will choose the smallest model that clears the accuracy bar.
+- A larger model is only used if the measured accuracy gain justifies the memory, speed, and thermal cost.
+- We do not invent values. `TBD`/`null` placeholders remain until real measurements exist.
+- RAM ceiling is 7 GB; safe target is 5.5–6 GB product peak RSS.
+
+The official ADTC profiler (`reports/submission.json`) measures the model/runtime. The product benchmark (`reports/product_smoke_test.json`) and internal model benchmark (`reports/model_benchmark.json`) measure full app behavior and candidate comparison. Both kinds of measurement are needed, and a profiler pass is never claimed unless actually run.
+
 ## Retrieval Strategy
 
 Documents are chunked into approximately 350-token windows with 50-token overlap. Chunks are embedded locally with Sentence Transformers and stored in `indexes/default`. Retrieval uses top-k = 3 by default with FAISS when available and a NumPy similarity fallback otherwise.

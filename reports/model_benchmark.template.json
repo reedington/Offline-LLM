@@ -1,0 +1,55 @@
+{
+  "benchmark": "model_benchmark",
+  "llama_cpp_available": null,
+  "n_ctx": 2048,
+  "n_threads": null,
+  "models_found": [],
+  "rss_baseline_mb": null,
+  "ram_ceiling_gb": 7,
+  "safe_product_peak_gb": "5.5-6",
+  "message": "TBD",
+  "setup_instructions": null,
+  "results": [
+    {
+      "model_file": "TBD.gguf",
+      "model_path": "models/TBD.gguf",
+      "load_success": null,
+      "load_time_ms": null,
+      "rss_before_load_mb": null,
+      "rss_after_load_mb": null,
+      "rss_after_generation_mb": null,
+      "total_generation_latency_ms": null,
+      "error": null,
+      "notes": "tokens_generated/approx_tokens_per_second are null when llama-cpp-python does not expose usage token counts.",
+      "prompts": [
+        {
+          "id": "simple_instruction",
+          "kind": "simple instruction",
+          "prompt_latency_ms": null,
+          "tokens_generated": null,
+          "approx_tokens_per_second": null,
+          "response_preview": "TBD",
+          "error": null
+        },
+        {
+          "id": "document_grounded",
+          "kind": "document-grounded style",
+          "prompt_latency_ms": null,
+          "tokens_generated": null,
+          "approx_tokens_per_second": null,
+          "response_preview": "TBD",
+          "error": null
+        },
+        {
+          "id": "abstention",
+          "kind": "abstention style",
+          "prompt_latency_ms": null,
+          "tokens_generated": null,
+          "approx_tokens_per_second": null,
+          "response_preview": "TBD",
+          "error": null
+        }
+      ]
+    }
+  ]
+}
