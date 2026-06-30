@@ -1,0 +1,226 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background: #070805;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+}
+
+@layer components {
+  .ambient {
+    pointer-events: none;
+    position: fixed;
+    border-radius: 9999px;
+    filter: blur(90px);
+    opacity: 0.24;
+  }
+
+  .ambient-one {
+    right: -14rem;
+    top: -8rem;
+    height: 28rem;
+    width: 28rem;
+    background: #d6a84f;
+  }
+
+  .ambient-two {
+    bottom: -18rem;
+    left: -12rem;
+    height: 34rem;
+    width: 34rem;
+    background: #4f7d5b;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold;
+    background: rgba(21, 23, 15, 0.82);
+    border-color: rgba(55, 51, 31, 0.9);
+    color: #f5ead2;
+  }
+
+  .status-pill.gold {
+    color: #f0bd62;
+  }
+
+  .status-pill.green {
+    color: #9dc59f;
+  }
+
+  .status-pill.warn {
+    color: #f0bd62;
+    border-color: rgba(240, 189, 98, 0.45);
+  }
+
+  .workspace-shell {
+    @apply grid min-w-0 gap-4 rounded-[2rem] border border-adtc-line bg-adtc-card/80 p-4 shadow-premium backdrop-blur-xl xl:grid-cols-[minmax(18rem,21rem)_minmax(0,1fr)];
+  }
+
+  .document-rail {
+    @apply flex min-w-0 flex-col gap-5 rounded-[1.5rem] border border-adtc-line bg-adtc-ink/70 p-5;
+  }
+
+  .chat-panel {
+    @apply flex min-h-[620px] min-w-0 flex-col gap-5 rounded-[1.5rem] border border-adtc-line bg-gradient-to-br from-adtc-cardSoft to-adtc-ink p-5;
+  }
+
+  .field {
+    @apply grid gap-2 text-sm font-bold text-adtc-muted;
+  }
+
+  .field input:not([type="range"]) {
+    @apply h-12 rounded-2xl border border-adtc-line bg-adtc-black/60 px-4 text-adtc-cream outline-none transition focus:border-adtc-gold;
+  }
+
+  .field input[type="range"] {
+    accent-color: #d6a84f;
+  }
+
+  .sample-toggle {
+    @apply flex min-w-0 items-center gap-3 rounded-2xl border border-adtc-line bg-adtc-black/40 p-4 text-sm font-bold leading-6 text-adtc-cream;
+  }
+
+  .sample-toggle input {
+    @apply h-5 w-5;
+    accent-color: #d6a84f;
+  }
+
+  .upload-zone {
+    @apply relative grid cursor-pointer gap-2 rounded-3xl border border-dashed border-adtc-gold/50 bg-adtc-black/40 p-5 text-adtc-cream transition hover:border-adtc-gold hover:bg-adtc-black/70;
+  }
+
+  .upload-zone input {
+    @apply absolute inset-0 cursor-pointer opacity-0;
+  }
+
+  .document-chip {
+    @apply flex min-w-0 items-center gap-2 rounded-2xl border border-adtc-line bg-adtc-black/50 px-3 py-2 text-sm text-adtc-muted;
+  }
+
+  .document-chip span {
+    @apply min-w-0 truncate;
+  }
+
+  .action-button {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-adtc-gold px-5 font-black text-adtc-black transition hover:bg-adtc-amber disabled:cursor-progress disabled:opacity-60;
+  }
+
+  .quiet-button {
+    @apply inline-flex min-h-12 items-center justify-center rounded-2xl border border-adtc-line bg-adtc-black/50 px-5 font-black text-adtc-cream transition hover:border-adtc-gold disabled:cursor-progress disabled:opacity-60;
+  }
+
+  .status-badge {
+    @apply w-full rounded-2xl border border-adtc-line bg-adtc-black/50 px-4 py-3 text-left text-sm font-bold leading-6 text-adtc-muted;
+    overflow-wrap: anywhere;
+  }
+
+  .status-badge.ok {
+    @apply border-adtc-green/50 text-[#9dc59f];
+  }
+
+  .status-badge.gold {
+    @apply border-adtc-gold/50 text-adtc-gold;
+  }
+
+  .status-badge.warn {
+    @apply border-adtc-gold/60 text-adtc-amber;
+  }
+
+  .empty-state {
+    @apply flex min-h-0 min-w-0 items-start gap-3 rounded-3xl border border-adtc-line bg-adtc-black/40 p-4 text-sm leading-6 text-adtc-muted;
+    overflow-wrap: anywhere;
+  }
+
+  .empty-state svg {
+    @apply shrink-0;
+  }
+
+  .empty-state span {
+    @apply min-w-0;
+  }
+
+  .empty-mini {
+    @apply min-w-0 rounded-2xl border border-adtc-line bg-adtc-black/40 p-4 text-sm leading-6 text-adtc-muted;
+    overflow-wrap: anywhere;
+  }
+
+  .question-box {
+    @apply mt-auto flex min-w-0 items-center gap-3 rounded-3xl border border-adtc-line bg-adtc-black/60 p-3;
+  }
+
+  .question-box input {
+    @apply h-12 min-w-0 flex-1 bg-transparent px-2 text-adtc-cream outline-none placeholder:text-adtc-muted;
+  }
+
+  .answer-card {
+    @apply grid min-w-0 gap-4 rounded-[1.5rem] border border-adtc-line bg-adtc-black/45 p-5;
+  }
+
+  .section-label {
+    @apply mb-3 text-xs font-black uppercase tracking-[0.24em] text-adtc-gold;
+  }
+
+  .answer-section {
+    @apply min-w-0 rounded-3xl border border-adtc-line bg-adtc-card/70 p-5 text-lg leading-8 text-adtc-cream;
+    overflow-wrap: anywhere;
+  }
+
+  .evidence-section {
+    @apply min-w-0 rounded-3xl border border-adtc-line bg-adtc-card/70 p-5;
+  }
+
+  .evidence-card {
+    @apply min-w-0 rounded-2xl border border-adtc-line bg-adtc-black/50 p-4;
+    overflow-wrap: anywhere;
+  }
+
+  .evidence-card strong {
+    @apply min-w-0 text-adtc-cream;
+  }
+
+  .evidence-card span {
+    @apply shrink-0 whitespace-nowrap rounded-full border border-adtc-gold/30 px-3 py-1 text-xs font-bold text-adtc-gold;
+  }
+
+  .evidence-card p {
+    @apply mt-3 leading-7 text-adtc-muted;
+  }
+
+  .debug-chunks {
+    @apply min-w-0 rounded-3xl border border-adtc-line bg-adtc-card/60 p-5;
+  }
+
+  .debug-chunks summary {
+    @apply cursor-pointer text-sm font-black uppercase tracking-[0.2em] text-adtc-gold;
+  }
+
+  .chunk-card {
+    @apply min-w-0 rounded-2xl border border-adtc-line bg-adtc-black/50 p-4;
+    overflow-wrap: anywhere;
+  }
+
+  .chunk-card strong {
+    @apply min-w-0 text-sm text-adtc-cream;
+  }
+
+  .chunk-card span {
+    @apply shrink-0 rounded-full border border-adtc-gold/30 px-3 py-1 text-xs font-bold text-adtc-gold;
+  }
+
+  .chunk-card p {
+    @apply mt-3 max-h-36 overflow-auto text-sm leading-6 text-adtc-muted;
+  }
+}

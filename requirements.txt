@@ -1,0 +1,10 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+llama-cpp-python>=0.2.90
+sentence-transformers>=3.0
+numpy>=1.26
+faiss-cpu>=1.8
+pypdf>=4.2
+psutil>=5.9
+pytest>=8.2

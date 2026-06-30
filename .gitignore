@@ -1,0 +1,16 @@
+.DS_Store
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+models/*.gguf
+models/*.bin
+indexes/*
+!indexes/.gitkeep
+reports/*
+!reports/.gitkeep
+uploads/
+frontend/node_modules/
+frontend/dist/

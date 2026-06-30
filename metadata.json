@@ -1,0 +1,9 @@
+{
+  "team": "offline-sme-ai-assistant",
+  "model_name": "PLACEHOLDER_SMALL_GGUF_MODEL",
+  "model_path": "models/model.gguf",
+  "model_format": "GGUF",
+  "runtime": "llama.cpp / llama-cpp-python",
+  "task": "offline SME document RAG assistant",
+  "notes": "Place the GGUF model at models/model.gguf before profiling."
+}
