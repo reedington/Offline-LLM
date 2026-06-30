@@ -2,7 +2,7 @@
 
 An English-only, offline document RAG assistant for SMEs. It runs as a polished local web app with a React + Vite + Tailwind frontend and a FastAPI backend. It loads PDF/TXT business documents, builds a cached local vector index, retrieves evidence, and answers using a small GGUF model through `llama-cpp-python`.
 
-Current phase: English RAG backend integration. The app is intentionally v1-simple: no NLLB, no fine-tuning, no LightRAG, no agents, and no cloud APIs in the product path.
+Current phase: English RAG backend integration with product-level benchmarking and live metrics. The app is intentionally v1-simple: no NLLB, no fine-tuning, no LightRAG, no agents, and no cloud APIs in the product path.
 
 ## What It Does
 
@@ -93,12 +93,27 @@ Then open `http://localhost:8000`.
 
 ## Run Tests
 
+Run backend commands inside the active project virtual environment. Activate it first:
+
+```bash
+source .venv/bin/activate
+```
+
 ```bash
 cd backend
 python -m compileall app
-pytest ../tests -q
+python -m pytest ../tests -q
 cd ../frontend
 npm run build
+```
+
+Optional backend shortcuts:
+
+```bash
+cd backend
+make test
+make benchmark
+make run
 ```
 
 ## Run Product Benchmark
@@ -113,6 +128,7 @@ The benchmark writes `reports/product_smoke_test.json`. It is a local smoke test
 ## API Endpoints
 
 - `GET /health`: backend/model/index status
+- `GET /metrics`: product-level RSS memory, model/index status, document/chunk counts, last query latency
 - `POST /upload`: upload TXT/PDF files, extract, chunk, embed, and cache the vector index
 - `GET /documents`: list indexed documents
 - `POST /chat`: ask a question and receive Answer / Evidence plus retrieved chunks

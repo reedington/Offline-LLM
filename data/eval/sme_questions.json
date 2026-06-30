@@ -1,0 +1,72 @@
+[
+  {
+    "id": "q001",
+    "question": "What is the payment period in the supplier agreement?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_supplier_agreement.txt",
+    "notes": "Payment terms are net 30 days from the invoice date."
+  },
+  {
+    "id": "q002",
+    "question": "How quickly will Northline Foods deliver orders after receiving a purchase order?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_supplier_agreement.txt",
+    "notes": "Delivery is within five business days."
+  },
+  {
+    "id": "q003",
+    "question": "What must BrightMart provide when reporting damaged goods?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_supplier_agreement.txt",
+    "notes": "Photos and the delivery note number are required."
+  },
+  {
+    "id": "q004",
+    "question": "Can customers return opened hygiene products?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_returns_policy.txt",
+    "notes": "Opened hygiene products cannot be returned unless defective."
+  },
+  {
+    "id": "q005",
+    "question": "How long do customers have to return unopened retail items?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_returns_policy.txt",
+    "notes": "Unopened retail items can be returned within 14 days with a receipt."
+  },
+  {
+    "id": "q006",
+    "question": "What is the unit price of the solar lantern?",
+    "expected_behavior": "answerable",
+    "expected_source": "sample_price_list.txt",
+    "notes": "The solar lantern unit price is 12000 NGN."
+  },
+  {
+    "id": "q007",
+    "question": "What warranty period is offered for refrigerated trucks?",
+    "expected_behavior": "unanswerable",
+    "expected_source": "",
+    "notes": "This topic is not present in the sample documents."
+  },
+  {
+    "id": "q008",
+    "question": "Who is the chief financial officer of BrightMart Retail Ltd?",
+    "expected_behavior": "unanswerable",
+    "expected_source": "",
+    "notes": "The sample documents do not name a CFO."
+  },
+  {
+    "id": "q009",
+    "question": "What is the invoice total for two solar lanterns and one water filter cartridge?",
+    "expected_behavior": "calculator",
+    "expected_source": "sample_price_list.txt",
+    "notes": "Two solar lanterns at 12000 NGN plus one water filter cartridge at 4500 NGN equals 28500 NGN."
+  },
+  {
+    "id": "q010",
+    "question": "What is the discounted price of a 12000 NGN solar lantern with a 5 percent discount?",
+    "expected_behavior": "calculator",
+    "expected_source": "sample_price_list.txt",
+    "notes": "A 5 percent discount on 12000 NGN gives 11400 NGN."
+  }
+]

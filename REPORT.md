@@ -2,7 +2,7 @@
 
 ## Summary
 
-Current phase: English RAG backend integration. This v1 builds a local English-only RAG assistant for SME business documents. It supports TXT and PDF uploads, local chunk embeddings, cached vector search, GGUF inference, evidence display, and strict abstention when retrieved evidence does not support an answer.
+Current phase: English RAG backend integration with product benchmarking and live metrics. This v1 builds a local English-only RAG assistant for SME business documents. It supports TXT and PDF uploads, local chunk embeddings, cached vector search, GGUF inference, evidence display, strict abstention when retrieved evidence does not support an answer, and product-level memory/status instrumentation.
 
 ## Current Scope
 
@@ -38,6 +38,7 @@ Implemented backend modules under `backend/app/`:
 Implemented FastAPI endpoints:
 
 - `GET /health`
+- `GET /metrics`
 - `POST /upload`
 - `GET /documents`
 - `POST /chat`
@@ -75,6 +76,43 @@ Default configuration targets a small quantized GGUF model placeholder at `model
 - compact context prompt
 
 The product benchmark reports rough RSS memory through `psutil`.
+
+## Phase 3 Benchmarking
+
+Product smoke benchmark command:
+
+```bash
+cd backend
+python -m app.benchmark
+```
+
+Output path:
+
+```text
+reports/product_smoke_test.json
+```
+
+The benchmark measures:
+
+- sample document loading
+- chunking and local index build/load
+- top-k retrieval behavior
+- calculator question handling
+- model-missing behavior when `models/model.gguf` is absent
+- per-question latency
+- process RSS memory through `psutil`
+
+Profiler placeholders:
+
+- model name: TBD
+- quantization: TBD
+- tokens/sec from ADTC profiler: TBD
+- first-token latency: TBD
+- product RSS memory: TBD
+- peak RSS memory: TBD
+- temperature/throttling status: TBD
+- retrieval accuracy notes: TBD
+- abstention behavior notes: TBD
 
 ## Retrieval Strategy
 

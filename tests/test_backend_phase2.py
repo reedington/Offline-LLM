@@ -106,6 +106,13 @@ class AnsweringLLM:
         return "Answer:\nPayment terms are net 30 days.\n\nEvidence:\n- Source document: doc.txt"
 
 
+class MissingModelLLM:
+    def generate(self, prompt, max_tokens=512):
+        from app.llm import ModelNotFoundError
+
+        raise ModelNotFoundError("GGUF model not found at models/model.gguf.")
+
+
 def test_chat_endpoint_returns_structured_answer(monkeypatch):
     pytest.importorskip("fastapi.testclient")
     from fastapi.testclient import TestClient
@@ -124,3 +131,89 @@ def test_chat_endpoint_returns_structured_answer(monkeypatch):
     assert payload["evidence"][0]["confidence"] == "high"
     assert payload["retrieved_chunks"][0]["chunk_id"] == "doc.txt::chunk-0000"
     assert isinstance(payload["latency_ms"], int)
+
+
+def test_metrics_endpoint_returns_status_fields(monkeypatch):
+    pytest.importorskip("fastapi.testclient")
+    from fastapi.testclient import TestClient
+    from app import main as backend_main
+
+    monkeypatch.setattr(backend_main, "active_store", StrongStore())
+    monkeypatch.setattr(backend_main, "last_query_latency_ms", 123)
+
+    response = TestClient(backend_main.app).get("/metrics")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert isinstance(payload["rss_mb"], (int, float))
+    assert payload["index_ready"] is True
+    assert payload["documents_count"] == 1
+    assert payload["chunks_count"] == 1
+    assert payload["last_query_latency_ms"] == 123
+
+
+def test_chat_missing_model_returns_friendly_error(monkeypatch):
+    pytest.importorskip("fastapi.testclient")
+    from fastapi.testclient import TestClient
+    from app import main as backend_main
+
+    monkeypatch.setattr(backend_main, "active_store", StrongStore())
+    monkeypatch.setattr(backend_main, "get_embedder", lambda: DummyEmbedder())
+    monkeypatch.setattr(backend_main, "get_llm", lambda: MissingModelLLM())
+
+    response = TestClient(backend_main.app).post("/chat", json={"question": "What are payment terms?"})
+
+    assert response.status_code == 400
+    assert "GGUF model not found" in response.json()["detail"]
+
+
+def test_chat_unanswerable_returns_exact_abstention(monkeypatch):
+    pytest.importorskip("fastapi.testclient")
+    from fastapi.testclient import TestClient
+    from app import main as backend_main
+
+    store = WeakStore()
+    store.ready = True
+    store.documents = [DocumentMetadata(filename="doc.txt", file_type="txt", characters=20, chunks=1)]
+    monkeypatch.setattr(backend_main, "active_store", store)
+    monkeypatch.setattr(backend_main, "get_embedder", lambda: DummyEmbedder())
+    monkeypatch.setattr(backend_main, "get_llm", lambda: AnsweringLLM())
+
+    response = TestClient(backend_main.app).post("/chat", json={"question": "Who is the CFO?"})
+
+    assert response.status_code == 200
+    assert response.json()["answer"] == ABSTENTION_MESSAGE
+
+
+def test_calculator_endpoint_works():
+    pytest.importorskip("fastapi.testclient")
+    from fastapi.testclient import TestClient
+    from app import main as backend_main
+
+    response = TestClient(backend_main.app).post(
+        "/tools/calculate",
+        json={
+            "operation": "invoice_total",
+            "items": [{"unit_price": 12000, "quantity": 2}, {"unit_price": 4500, "quantity": 1}],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["result"] == 28500
+
+
+def test_benchmark_writes_product_smoke_json(tmp_path, monkeypatch):
+    from app import benchmark
+
+    output = tmp_path / "product_smoke_test.json"
+    monkeypatch.setattr(benchmark, "OUTPUT_PATH", output)
+    monkeypatch.setattr(benchmark, "build_or_load_index", lambda: (StrongStore(), 1, StrongStore.documents))
+    monkeypatch.setattr(benchmark, "BenchmarkEmbedder", lambda: DummyEmbedder())
+    monkeypatch.setattr(benchmark, "LlamaCppLLM", lambda: MissingModelLLM())
+    benchmark.main()
+
+    assert output.exists()
+    payload = __import__("json").loads(output.read_text(encoding="utf-8"))
+    assert payload["benchmark"] == "product_smoke_test"
+    assert "rss_mb" in payload
+    assert payload["generation_status"] in {"ready", "model_missing"}

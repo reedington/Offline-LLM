@@ -14,6 +14,7 @@ from app.config import DEFAULT_INDEX_NAME, INDEX_DIR, MODEL_PATH, SAMPLE_DOCS_DI
 from app.document_loader import load_documents
 from app.embeddings import EmbeddingModel
 from app.llm import LlamaCppLLM, ModelNotFoundError
+from app.metrics import build_metrics
 from app.rag import RAGAssistant
 from app.schemas import CalculateRequest, ChatRequest, DocumentMetadata
 from app.tools import calculate_discount, calculate_invoice_total, calculate_margin, calculate_profit
@@ -34,6 +35,7 @@ app.add_middleware(
 active_store: VectorStore | None = None
 embedder: EmbeddingModel | None = None
 llm: LlamaCppLLM | None = None
+last_query_latency_ms: int | None = None
 
 
 def get_embedder() -> EmbeddingModel:
@@ -76,6 +78,12 @@ def health() -> dict:
         "index_ready": bool(store and store.ready),
         "documents_count": len(store.documents) if store else 0,
     }
+
+
+@app.get("/metrics")
+def metrics() -> dict:
+    store = load_cached_store()
+    return build_metrics(store, MODEL_PATH.exists(), last_query_latency_ms)
 
 
 @app.get("/api/health")
@@ -192,6 +200,7 @@ def api_load_index(index_name: str) -> dict:
 
 @app.post("/chat")
 async def chat(request: ChatRequest) -> dict:
+    global last_query_latency_ms
     started = time.perf_counter()
     store = load_cached_store()
     if not store or not store.ready:
@@ -201,11 +210,14 @@ async def chat(request: ChatRequest) -> dict:
         assistant = RAGAssistant(store, get_embedder(), get_llm())
         result = assistant.answer(request.question, top_k=request.top_k)
     except ModelNotFoundError as exc:
+        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
+        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    return {**result, "latency_ms": int((time.perf_counter() - started) * 1000)}
+    last_query_latency_ms = int((time.perf_counter() - started) * 1000)
+    return {**result, "latency_ms": last_query_latency_ms}
 
 
 @app.post("/api/ask")

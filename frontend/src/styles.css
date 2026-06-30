@@ -139,6 +139,24 @@
     @apply border-adtc-gold/60 text-adtc-amber;
   }
 
+  .metrics-strip {
+    @apply grid gap-2 rounded-2xl border border-adtc-line bg-adtc-black/40 p-3 text-xs font-bold uppercase tracking-[0.14em] text-adtc-muted;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .metrics-strip span {
+    @apply min-w-0 rounded-xl border border-adtc-line/70 bg-adtc-black/40 px-3 py-2;
+    overflow-wrap: anywhere;
+  }
+
+  .setup-warning {
+    @apply flex min-w-0 gap-3 rounded-3xl border border-adtc-gold/40 bg-adtc-black/50 p-4 text-sm leading-6 text-adtc-muted;
+  }
+
+  .setup-warning strong {
+    @apply block text-base text-adtc-cream;
+  }
+
   .empty-state {
     @apply flex min-h-0 min-w-0 items-start gap-3 rounded-3xl border border-adtc-line bg-adtc-black/40 p-4 text-sm leading-6 text-adtc-muted;
     overflow-wrap: anywhere;

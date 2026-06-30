@@ -16,6 +16,7 @@ import {
   Sparkles,
   UploadCloud,
 } from "lucide-react";
+import { askQuestion as postQuestion, getDocuments, getHealth, getMetrics, uploadDocuments } from "./api";
 import "./styles.css";
 
 const ABSTENTION = "I do not know based on the provided documents.";
@@ -28,12 +29,14 @@ function App() {
   const [question, setQuestion] = React.useState("");
   const [status, setStatus] = React.useState(null);
   const [system, setSystem] = React.useState(null);
+  const [metrics, setMetrics] = React.useState(null);
   const [indexInfo, setIndexInfo] = React.useState(null);
   const [result, setResult] = React.useState(null);
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
     refreshHealth();
+    refreshMetrics();
     refreshDocuments();
   }, []);
 
@@ -44,16 +47,24 @@ function App() {
 
   async function refreshHealth() {
     try {
-      const data = await request("/health");
+      const data = await getHealth();
       setSystem(data);
     } catch {
       setStatus({ tone: "warn", text: "Backend status is unavailable." });
     }
   }
 
+  async function refreshMetrics() {
+    try {
+      setMetrics(await getMetrics());
+    } catch {
+      // Metrics are useful but should not block the main workflow.
+    }
+  }
+
   async function refreshDocuments() {
     try {
-      const data = await request("/documents");
+      const data = await getDocuments();
       if (data.documents?.length) {
         setIndexInfo((current) => ({ ...(current || {}), documents: data.documents, index_ready: true }));
       }
@@ -67,15 +78,11 @@ function App() {
     setStatus({ tone: "gold", text: "Building a local evidence index..." });
     setResult(null);
     try {
-      const formData = new FormData();
-      formData.append("use_samples", useSamples ? "true" : "false");
-      for (const file of files) {
-        formData.append("files", file);
-      }
-      const data = await request("/upload", { method: "POST", body: formData });
+      const data = await uploadDocuments({ files, useSamples });
       setIndexInfo(data);
       setStatus({ tone: "ok", text: data.message });
       await refreshHealth();
+      await refreshMetrics();
     } catch (error) {
       setStatus({ tone: "warn", text: error.message });
     } finally {
@@ -87,10 +94,11 @@ function App() {
     setBusy(true);
     setStatus({ tone: "gold", text: "Loading cached local index..." });
     try {
-      const docs = await request("/documents");
-      const health = await request("/health");
+      const docs = await getDocuments();
+      const health = await getHealth();
       setSystem(health);
       setIndexInfo({ documents: docs.documents || [], index_ready: health.index_ready, chunks: 0 });
+      await refreshMetrics();
       setStatus({
         tone: health.index_ready ? "ok" : "warn",
         text: health.index_ready ? "Loaded cached local index." : "No cached index found. Upload documents first.",
@@ -110,16 +118,14 @@ function App() {
     setBusy(true);
     setStatus({ tone: "gold", text: "Retrieving evidence and preparing an answer..." });
     try {
-      const data = await request("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, top_k: topK }),
-      });
+      const data = await postQuestion({ question, topK });
       setResult(data);
       setStatus({ tone: "ok", text: "Answer grounded in retrieved evidence." });
+      await refreshMetrics();
     } catch (error) {
       setResult(null);
       setStatus({ tone: "warn", text: error.message });
+      await refreshMetrics();
     } finally {
       setBusy(false);
     }
@@ -152,7 +158,7 @@ function App() {
               <StatusPills system={system} modelReady={modelReady} />
             </div>
 
-            <PerformanceStrip topK={topK} indexInfo={indexInfo} modelReady={modelReady} />
+            <PerformanceStrip topK={topK} indexInfo={indexInfo} modelReady={modelReady} metrics={metrics} system={system} />
           </div>
 
           <Workspace
@@ -176,6 +182,7 @@ function App() {
             modelReady={modelReady}
             result={result}
             documents={documents}
+            metrics={metrics}
           />
         </section>
       </section>
@@ -222,13 +229,23 @@ function StatusPills({ system, modelReady }) {
   );
 }
 
-function PerformanceStrip({ topK, indexInfo, modelReady }) {
+function PerformanceStrip({ topK, indexInfo, modelReady, metrics, system }) {
   return (
     <div className="grid gap-3 rounded-3xl border border-adtc-line bg-adtc-card/80 p-4 shadow-premium sm:grid-cols-3">
       <Metric icon={Gauge} label="Context" value="2048 tokens" />
       <Metric icon={Quote} label="Retrieval" value={`Top ${topK} chunks`} />
       <Metric icon={Cpu} label="Model" value={modelReady ? "Local GGUF" : "Waiting"} />
-      {indexInfo ? <p className="text-sm text-adtc-muted sm:col-span-3">{indexInfo.chunks} chunks indexed locally.</p> : null}
+      {typeof indexInfo?.chunks === "number" ? (
+        <p className="text-sm text-adtc-muted sm:col-span-3">{indexInfo.chunks} chunks indexed locally.</p>
+      ) : null}
+      <div className="metrics-strip sm:col-span-3">
+        <span>Model: {metrics?.model_loaded || system?.model_loaded ? "loaded" : "missing"}</span>
+        <span>Index: {metrics?.index_ready || system?.index_ready ? "ready" : "not ready"}</span>
+        <span>Docs: {metrics?.documents_count ?? system?.documents_count ?? 0}</span>
+        <span>Chunks: {metrics?.chunks_count ?? 0}</span>
+        <span>RSS: {metrics?.rss_mb ? `${metrics.rss_mb} MB` : "..."}</span>
+        <span>Last: {metrics?.last_query_latency_ms ?? "none"} ms</span>
+      </div>
     </div>
   );
 }
@@ -318,6 +335,8 @@ function Workspace(props) {
           status={props.status}
         />
 
+        <ModelSetupWarning modelReady={props.modelReady} />
+
         <div className="question-box">
           <MessageSquareText className="h-5 w-5 shrink-0 text-adtc-gold" />
           <input
@@ -335,6 +354,23 @@ function Workspace(props) {
 
         <AnswerCard result={props.result} />
       </section>
+    </div>
+  );
+}
+
+function ModelSetupWarning({ modelReady }) {
+  if (modelReady) return null;
+
+  return (
+    <div className="setup-warning">
+      <AlertTriangle className="h-5 w-5 shrink-0 text-adtc-gold" />
+      <div>
+        <strong>No GGUF model found.</strong>
+        <p>Place a small quantized model at models/model.gguf and restart the backend.</p>
+        <p className="mt-2 text-xs uppercase tracking-[0.16em] text-adtc-gold">
+          Qwen2.5-1.5B-Instruct Q4 · Llama-3.2-1B-Instruct Q4 · SmolLM2-1.7B-Instruct Q4
+        </p>
+      </div>
     </div>
   );
 }
@@ -445,15 +481,6 @@ function AnswerCard({ result }) {
       </details>
     </article>
   );
-}
-
-async function request(url, options) {
-  const response = await fetch(url, options);
-  const data = await response.json();
-  if (!response.ok) {
-    throw new Error(data.detail || "Request failed.");
-  }
-  return data;
 }
 
 createRoot(document.getElementById("root")).render(<App />);
