@@ -1,10 +1,12 @@
 import numpy as np
+import pytest
 
 from app.chunking import chunk_documents, chunk_text
 from app.config import ABSTENTION_MESSAGE
 from app.document_loader import Document
 from app.prompts import SYSTEM_PROMPT
 from app.rag import RAGAssistant
+from app.schemas import DocumentMetadata
 from app.tools import calculate_discount, calculate_invoice_total, calculate_margin, calculate_profit
 
 
@@ -81,3 +83,44 @@ def test_backend_rag_abstains_when_no_evidence_is_available():
 
     assert result["answer"] == ABSTENTION_MESSAGE
     assert result["evidence"][0]["confidence"] == "low"
+
+
+class StrongStore:
+    ready = True
+    chunks = [object()]
+    documents = [DocumentMetadata(filename="doc.txt", file_type="txt", characters=32, chunks=1)]
+
+    def search(self, query_embedding, top_k=3):
+        return [
+            {
+                "source_document": "doc.txt",
+                "chunk_id": "doc.txt::chunk-0000",
+                "text": "Payment terms are net 30 days.",
+                "score": 0.9,
+            }
+        ]
+
+
+class AnsweringLLM:
+    def generate(self, prompt, max_tokens=512):
+        return "Answer:\nPayment terms are net 30 days.\n\nEvidence:\n- Source document: doc.txt"
+
+
+def test_chat_endpoint_returns_structured_answer(monkeypatch):
+    pytest.importorskip("fastapi.testclient")
+    from fastapi.testclient import TestClient
+    from app import main as backend_main
+
+    monkeypatch.setattr(backend_main, "active_store", StrongStore())
+    monkeypatch.setattr(backend_main, "get_embedder", lambda: DummyEmbedder())
+    monkeypatch.setattr(backend_main, "get_llm", lambda: AnsweringLLM())
+
+    response = TestClient(backend_main.app).post("/chat", json={"question": "What are the payment terms?"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["answer"] == "Payment terms are net 30 days."
+    assert payload["evidence"][0]["source_document"] == "doc.txt"
+    assert payload["evidence"][0]["confidence"] == "high"
+    assert payload["retrieved_chunks"][0]["chunk_id"] == "doc.txt::chunk-0000"
+    assert isinstance(payload["latency_ms"], int)
