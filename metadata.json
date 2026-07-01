@@ -7,12 +7,12 @@
   "submitter": {
     "name": "Gideon Adeleke",
     "email": "fikkyfresh81@gmail.com",
-    "github_handle": "TODO_SET_GITHUB_HANDLE"
+    "github_handle": "reedington"
   },
   "cross_disciplinary_pairing": {
-    "discipline": "TODO_SET_DISCIPLINE",
-    "load_bearing": false,
-    "description": "TODO_DESCRIBE_CROSS_DISCIPLINARY_PAIRING"
+    "discipline": "SME finance and business operations",
+    "load_bearing": true,
+    "description": "The assistant combines offline document intelligence with deterministic business tools for profit, margin, discount, invoice total, and payment-term analysis. This is load-bearing because SME users do not only need document Q&A; they also need reliable business arithmetic and operational decisions that should not be guessed by the language model."
   },
   "test_prompts": [
     {

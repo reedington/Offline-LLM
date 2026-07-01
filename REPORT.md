@@ -182,9 +182,19 @@ Run via `./scripts/run_adtc_profiler_participant.sh` (`adtc-profiler 0.1.0`, sch
 ### Pending
 
 - **Audit-mode / accuracy run:** TBD — run `./scripts/run_adtc_profiler_audit.sh` (needs `lm_eval`) and `./scripts/compare_adtc_reports.sh`.
-- **metadata.json identity fields:** `submitter.github_handle` and `cross_disciplinary_pairing` still hold `TODO_` placeholders and must be filled by the team before any real submission.
+- ~~**metadata.json identity fields**~~ — resolved in Phase 6A: `submitter.github_handle` and `cross_disciplinary_pairing` are filled in and `metadata.json` validates against the installed `adtc-profiler` schema (see `tests/test_metadata_schema.py`).
 
 Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; internal and profiler numbers above are measured. **Honesty note:** `african_alpha_claim` is set to `false` because the app is currently English-only. African-language support is in the design pipeline (future NLLB work) and the claim should only flip to `true` once that capability actually exists. `model.packaging` is `binary_bundle` (no Dockerfile in the repo).
+
+## Cross-Disciplinary Integration (Phase 6A)
+
+The submission pairs document AI with **SME finance and business operations**, and the pairing is load-bearing, not decorative:
+
+- **What it does.** Alongside document RAG, the app ships deterministic business tools: profit, margin, discount, invoice total, VAT/tax with a configurable rate (`DEFAULT_VAT_RATE_PERCENT`, default 7.5%), payment-term due-date calculation (e.g. Net 30), a payment-term day counter, and a late-payment calculator (`backend/app/tools.py`).
+- **Why it is load-bearing.** SME users do not only need document Q&A; they need reliable business arithmetic — invoice totals, margins, and payment deadlines — and operational decisions that should not be guessed by a 1.5B language model. Without the finance tools the product does not serve its core SME workflow, so the second discipline carries real functionality.
+- **The LLM never does arithmetic.** `backend/app/calculator_router.py` inspects each chat question first. When it can deterministically parse a calculator-style question (operation plus all required inputs), it answers from pure Python — the language model is never invoked (verified by `tests/test_calculator_routing.py`, which fails if the model is called). Anything it cannot parse unambiguously falls through to document RAG.
+- **Hallucination reduction.** Deterministic calculation removes the main hallucination surface for numeric questions: results come from audited arithmetic, not sampled tokens, and every calculated answer shows its work in the evidence panel as `Calculation:` / `Formula:` / `Inputs:` lines, so a judge or user can re-verify each number by hand.
+- **Answer format.** Document questions keep the standard Answer/Evidence format with document quotes; calculator questions keep the same structure but cite the deterministic calculator as the evidence source.
 
 ## Retrieval Strategy
 

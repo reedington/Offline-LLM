@@ -17,7 +17,17 @@ from app.llm import LlamaCppLLM, ModelNotFoundError
 from app.metrics import build_metrics
 from app.rag import RAGAssistant
 from app.schemas import CalculateRequest, ChatRequest, DocumentMetadata
-from app.tools import calculate_discount, calculate_invoice_total, calculate_margin, calculate_profit
+from app.calculator_router import try_calculate
+from app.tools import (
+    calculate_days_until_due,
+    calculate_discount,
+    calculate_invoice_total,
+    calculate_late_payment,
+    calculate_margin,
+    calculate_payment_due_date,
+    calculate_profit,
+    calculate_vat,
+)
 from app.vector_store import VectorStore
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -202,6 +212,12 @@ def api_load_index(index_name: str) -> dict:
 async def chat(request: ChatRequest) -> dict:
     global last_query_latency_ms
     started = time.perf_counter()
+
+    calc_result = try_calculate(request.question)
+    if calc_result is not None:
+        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
+        return {**calc_result, "latency_ms": last_query_latency_ms}
+
     store = load_cached_store()
     if not store or not store.ready:
         raise HTTPException(status_code=400, detail="No documents are indexed. Upload documents before asking questions.")
@@ -240,6 +256,20 @@ def calculate(request: CalculateRequest) -> dict:
             )
         elif operation in {"invoice total", "invoice_total"}:
             result = calculate_invoice_total(request.items or [])
+        elif operation in {"vat", "tax"}:
+            result = calculate_vat(_required(request.amount, "amount"), request.vat_rate_percent)
+        elif operation in {"payment due date", "due date"}:
+            if request.invoice_date is None or request.net_days is None:
+                raise ValueError("invoice_date and net_days are required.")
+            result = calculate_payment_due_date(request.invoice_date, request.net_days).isoformat()
+        elif operation in {"days until due", "payment term days"}:
+            if request.due_date is None or request.as_of is None:
+                raise ValueError("due_date and as_of are required.")
+            result = calculate_days_until_due(request.due_date, request.as_of)
+        elif operation in {"late payment", "late payment date"}:
+            if request.due_date is None or request.as_of is None:
+                raise ValueError("due_date and as_of are required.")
+            result = calculate_late_payment(request.due_date, request.as_of)
         else:
             raise ValueError("Unsupported calculator operation.")
     except (KeyError, ValueError) as exc:

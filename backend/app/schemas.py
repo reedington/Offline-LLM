@@ -57,3 +57,9 @@ class CalculateRequest(BaseModel):
     original_price: float | None = None
     discount_percent: float | None = None
     items: list[dict] | None = None
+    amount: float | None = None
+    vat_rate_percent: float | None = None
+    invoice_date: str | None = None
+    net_days: int | None = None
+    due_date: str | None = None
+    as_of: str | None = None
