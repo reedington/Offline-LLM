@@ -153,14 +153,26 @@ The official ADTC profiler (`reports/submission.json`) measures the model/runtim
 
 Phase 5 runs the Phase 4 tooling against a real model placed manually at `models/model.gguf`. See `MODEL_SETUP.md` for setup and `reports/model_selection_template.md` for the comparison table.
 
-- **Selected model:** TBD
-- **First candidate:** Qwen2.5-1.5B-Instruct GGUF Q4
-- **Reason:** small, likely strong, RAM-safe candidate that fits well under the 7 GB ceiling
+- **Selected model:** TBD (Qwen2.5-1.5B-Instruct Q4_K_M is the current leading candidate, pending the official ADTC profiler)
+- **First candidate:** Qwen2.5-1.5B-Instruct GGUF Q4_K_M (`qwen2.5-1.5b-instruct-q4_k_m.gguf`, ~1.0 GB)
+- **Reason:** small, strong, RAM-safe candidate that fits well under the 7 GB ceiling
 - **Larger models:** only considered after measurement (Gemma-2-2B-it Q4, then Llama-3.2-3B-Instruct Q4 only if the profiler shows RAM/speed/thermal headroom)
-- **Real benchmark values:** TBD (load time, product RSS, peak RSS, tokens/sec, first-token latency)
-- **ADTC profiler values:** TBD (`reports/submission.json`)
 
-Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; `TBD` placeholders remain until real measurements exist.
+### Measured internal benchmark (Qwen2.5-1.5B-Instruct Q4_K_M, 2026-07-01)
+
+Local run on Apple Silicon (`llama-cpp-python` 0.3.32). Internal artifacts only — the official ADTC profiler has **not** been run yet.
+
+- **Load success:** yes; **load time:** ~11.7 s (`reports/model_benchmark.json`)
+- **Peak RSS:** ~2046 MB after generation — well under the 7 GB ceiling and the 5.5–6 GB safe target
+- **Tokens/sec:** ~18–56 (per-prompt average across the three benchmark prompts; not official steady-state throughput)
+- **First-token latency:** not measured (the internal benchmark records full prompt latency, not time-to-first-token; use the profiler for this)
+- **Product benchmark:** 10/10 behaviors correct — 6/6 answerable answered with Answer/Evidence, 2/2 unanswerable returned the exact abstention phrase, 2/2 calculator handled deterministically (`reports/product_smoke_test.json`)
+
+### Pending
+
+- **ADTC profiler values:** TBD (`reports/submission.json`) — run `./scripts/run_adtc_profiler_participant.sh`
+
+Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; internal numbers above are measured, and profiler values remain `TBD` until the profiler is actually run.
 
 ## Retrieval Strategy
 
