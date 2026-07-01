@@ -149,6 +149,19 @@ Decision policy:
 
 The official ADTC profiler (`reports/submission.json`) measures the model/runtime. The product benchmark (`reports/product_smoke_test.json`) and internal model benchmark (`reports/model_benchmark.json`) measure full app behavior and candidate comparison. Both kinds of measurement are needed, and a profiler pass is never claimed unless actually run.
 
+## Phase 5: Model Selection
+
+Phase 5 runs the Phase 4 tooling against a real model placed manually at `models/model.gguf`. See `MODEL_SETUP.md` for setup and `reports/model_selection_template.md` for the comparison table.
+
+- **Selected model:** TBD
+- **First candidate:** Qwen2.5-1.5B-Instruct GGUF Q4
+- **Reason:** small, likely strong, RAM-safe candidate that fits well under the 7 GB ceiling
+- **Larger models:** only considered after measurement (Gemma-2-2B-it Q4, then Llama-3.2-3B-Instruct Q4 only if the profiler shows RAM/speed/thermal headroom)
+- **Real benchmark values:** TBD (load time, product RSS, peak RSS, tokens/sec, first-token latency)
+- **ADTC profiler values:** TBD (`reports/submission.json`)
+
+Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; `TBD` placeholders remain until real measurements exist.
+
 ## Retrieval Strategy
 
 Documents are chunked into approximately 350-token windows with 50-token overlap. Chunks are embedded locally with Sentence Transformers and stored in `indexes/default`. Retrieval uses top-k = 3 by default with FAISS when available and a NumPy similarity fallback otherwise.

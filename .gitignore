@@ -10,9 +10,11 @@ models/*.bin
 indexes/*
 !indexes/.gitkeep
 reports/*
+reports/*.json
 !reports/.gitkeep
 !reports/model_benchmark.template.json
 !reports/adtc_profiler_notes.md
+!reports/model_selection_template.md
 uploads/
 frontend/node_modules/
 frontend/dist/

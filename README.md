@@ -197,6 +197,31 @@ Workflow:
 
 Model configuration profiles for candidate models live in `backend/app/model_profiles.py`. See `reports/adtc_profiler_notes.md` for how the measurements relate and the RAM budget (7 GB ceiling, 5.5–6 GB safe product peak).
 
+## Phase 5: Testing a real GGUF model
+
+Phase 5 is about running the existing Phase 4 tooling against a real model. See `MODEL_SETUP.md` for the full setup guide and `reports/model_selection_template.md` for the comparison table to fill in.
+
+- The reports generated **without** a model are expected — `model_benchmark.json` reports "No .gguf models found" and `product_smoke_test.json` reports `generation_status: model_missing`. That is the correct safe behavior.
+- Once you place a model at `models/model.gguf`, the **same commands** produce real model numbers (load time, latency, RSS, tokens/sec):
+
+  ```bash
+  cd backend
+  python -m app.model_benchmark
+  python -m app.benchmark
+  ```
+
+  and from the repo root:
+
+  ```bash
+  ./scripts/check_model_file.sh          # sanity-check the model file size
+  ./scripts/run_adtc_profiler_participant.sh
+  ```
+
+- `reports/model_benchmark.json` and `reports/product_smoke_test.json` are **gitignored internal artifacts** — do not commit them.
+- **Do not commit large GGUF model files.** `models/` stays gitignored except `models/.gitkeep` (`models/*.gguf` and `models/*.bin` are ignored).
+
+Start with Qwen2.5-1.5B-Instruct Q4. Do not start with 7B, do not use fp16, and only try a 3B model if the profiler shows enough RAM, speed, and thermal headroom.
+
 ## API Endpoints
 
 - `GET /health`: backend/model/index status
