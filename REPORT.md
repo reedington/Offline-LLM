@@ -153,7 +153,7 @@ The official ADTC profiler (`reports/submission.json`) measures the model/runtim
 
 Phase 5 runs the Phase 4 tooling against a real model placed manually at `models/model.gguf`. See `MODEL_SETUP.md` for setup and `reports/model_selection_template.md` for the comparison table.
 
-- **Selected model:** TBD (Qwen2.5-1.5B-Instruct Q4_K_M is the current leading candidate, pending the official ADTC profiler)
+- **Selected model:** Qwen2.5-1.5B-Instruct Q4_K_M — confirmed on 2026-07-02 after a measured head-to-head against Llama-3.2-1B-Instruct Q4_K_M (see "Model speed comparison" below)
 - **First candidate:** Qwen2.5-1.5B-Instruct GGUF Q4_K_M (`qwen2.5-1.5b-instruct-q4_k_m.gguf`, ~1.0 GB)
 - **Reason:** small, strong, RAM-safe candidate that fits well under the 7 GB ceiling
 - **Larger models:** only considered after measurement (Gemma-2-2B-it Q4, then Llama-3.2-3B-Instruct Q4 only if the profiler shows RAM/speed/thermal headroom)
@@ -179,6 +179,21 @@ Run via `./scripts/run_adtc_profiler_participant.sh` (`adtc-profiler 0.1.0`, sch
 - **Model info:** architecture `qwen2`, `params_match: true` (GGUF fraud check passed)
 - **Accuracy:** `[]` (skipped in participant mode)
 - **Re-run after Phase 6A metadata fixes (same day, same machine):** 103.6 tok/s, 398 ms first-token latency, 1150 MB peak RSS, throttled false — confirming the profiler accepts the finalized `metadata.json` (github_handle and cross-disciplinary pairing filled).
+
+### Model speed comparison: Qwen2.5-1.5B vs Llama-3.2-1B (2026-07-02)
+
+Measured head-to-head on the same machine (Apple M4 Pro, participant-mode profiler with `--skip-accuracy`, plus the internal benchmarks), following `docs/model_comparison.md`. Question: is Qwen 1.5B worth the extra size versus a faster 1B model?
+
+| Metric | Qwen2.5-1.5B Q4_K_M | Llama-3.2-1B Q4_K_M |
+|---|---|---|
+| Official profiler TPS | 101–107 tok/s | 140.8 tok/s |
+| First-token latency | 366–398 ms | 287 ms |
+| Model-only peak RSS | ~1210 MB | 930 MB |
+| Product peak RSS | ~2095 MB | 1839 MB |
+| Behavior correctness | **10/10** | **5/10** |
+| Thermal | throttled=false | throttled=false |
+
+Llama-3.2-1B is ~35% faster and ~280 MB lighter, but its product behavior collapses: it broke the Answer/Evidence format on one answerable question, falsely abstained on three others, and **hallucinated a wrong answer** on the opened-hygiene-returns question (claimed returns are allowed; the policy says they are not unless defective). Accuracy is 50% of the ADTC score while speed is 30% (relative), and both models sit far below the RAM ceiling — so **Qwen2.5-1.5B stays the selected model**. Candidate artifacts: `reports/submission.llama-3.2-1b.json`, `reports/product_smoke_test.llama-3.2-1b.json` (gitignored, kept locally).
 
 ### Pending
 

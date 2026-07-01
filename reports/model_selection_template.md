@@ -12,7 +12,7 @@ Sources:
 | Model | Quantization | Load success | Load time | Official profiler TPS | First-token latency (profiler) | Model-only RSS (profiler) | Product RSS (full app) | Behavior correctness | Thermal / throttle | ADTC profiler report path | Notes | Decision |
 |-------|--------------|--------------|-----------|-----------------------|--------------------------------|---------------------------|------------------------|----------------------|--------------------|---------------------------|-------|----------|
 | Qwen2.5-1.5B-Instruct | Q4_K_M | Yes | 11.7 s | 106.9 tok/s | 388 ms | 1209 MB peak | 2046 MB peak | 10/10 behaviors correct (6/6 answerable, 2/2 abstention, 2/2 calculator) | CPU p99 15.2%, throttled=false | reports/submission.json (participant, --skip-accuracy) | Profiler run 2026-07-01 on Apple M4 Pro; params_match=true | leading candidate |
-| Llama-3.2-1B-Instruct | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Smaller/faster baseline — is Qwen worth the extra size? | TBD |
+| Llama-3.2-1B-Instruct | Q4_K_M | Yes | 1.2 s | 140.8 tok/s | 287 ms | 930 MB peak | 1839 MB peak | 5/10 behaviors correct (1 format break, 3 false abstentions, 1 hallucinated answer; 2/2 unanswerable, 2/2 calculator OK) | CPU p99 16.7%, throttled=false | reports/submission.llama-3.2-1b.json (participant, --skip-accuracy) | Profiler run 2026-07-02 on Apple M4 Pro; params_match=true. Faster/lighter but quality gap is large | rejected — keep Qwen |
 | SmolLM2-1.7B-Instruct | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | On-device alternative | TBD |
 | Gemma-2-2B-it | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Larger 2B; watch RAM/speed | TBD |
 | Llama-3.2-3B-Instruct | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Do not test until Ubuntu 7 GB validation passes | TBD |
@@ -44,9 +44,18 @@ Sources:
 
 ### Qwen2.5-1.5B vs Llama-3.2-1B decision rule
 
-The current comparison question is: **is Qwen 1.5B worth the extra size versus
-a faster 1B baseline?** Rule, applied only after both rows above hold real
-measured values (see `docs/model_comparison.md` for the procedure):
+The comparison question was: **is Qwen 1.5B worth the extra size versus a
+faster 1B baseline?** Answered on 2026-07-02 with measured values (procedure
+in `docs/model_comparison.md`):
+
+**Decision: keep Qwen2.5-1.5B-Instruct Q4_K_M.** Llama-3.2-1B is measurably
+faster (140.8 vs 101–107 tok/s) and lighter (930 vs ~1210 MB model-only RSS),
+but its product behavior is far worse: 5/10 vs 10/10 — it broke the
+Answer/Evidence format on one answerable question, falsely abstained on three
+others, and hallucinated a wrong "yes" on the opened-hygiene-returns question
+(the policy says returns are not allowed unless defective). Accuracy is 50% of
+the ADTC score and both models are comfortably inside the RAM/speed budget, so
+Qwen's quality advantage is decisive, per the rule below.
 
 - **Keep Qwen2.5-1.5B** if its accuracy/behavior is clearly better (product
   benchmark behaviors, Answer/Evidence discipline, abstention correctness) and
