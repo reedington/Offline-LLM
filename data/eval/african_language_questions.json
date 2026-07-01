@@ -1,0 +1,42 @@
+{
+  "description": "Experimental African-language bridge eval set (Phase 6D). Questions mirror the English SME eval intents so bridged answers can be checked against the same documents. Used only when FEATURE_AFRICAN_LANG=true.",
+  "languages": ["yo", "ha", "sw"],
+  "questions": [
+    {
+      "id": "yo-1",
+      "language": "yo",
+      "question": "Kí ni àkókò ìsanwó nínú àdéhùn olùpèsè?",
+      "english_reference": "What is the payment period in the supplier agreement?"
+    },
+    {
+      "id": "yo-2",
+      "language": "yo",
+      "question": "Ọjọ́ mélòó ni àwọn oníbàárà ní láti dá ọjà tí kò ṣí padà?",
+      "english_reference": "How many days do customers have to return unopened retail items?"
+    },
+    {
+      "id": "ha-1",
+      "language": "ha",
+      "question": "Menene lokacin biyan kudi a cikin yarjejeniyar mai kaya?",
+      "english_reference": "What is the payment period in the supplier agreement?"
+    },
+    {
+      "id": "ha-2",
+      "language": "ha",
+      "question": "Kwanaki nawa abokan ciniki suke da su don mayar da kayan da ba a bude ba?",
+      "english_reference": "How many days do customers have to return unopened items?"
+    },
+    {
+      "id": "sw-1",
+      "language": "sw",
+      "question": "Je, muda wa malipo katika mkataba wa msambazaji ni nini?",
+      "english_reference": "What is the payment period in the supplier agreement?"
+    },
+    {
+      "id": "sw-2",
+      "language": "sw",
+      "question": "Wateja wana siku ngapi za kurudisha bidhaa ambazo hazijafunguliwa?",
+      "english_reference": "How many days do customers have to return unopened items?"
+    }
+  ]
+}

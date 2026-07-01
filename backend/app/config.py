@@ -28,3 +28,10 @@ TOP_K = int(os.getenv("TOP_K", "3"))
 MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "25"))
 
 ABSTENTION_MESSAGE = "I do not know based on the provided documents."
+
+# Experimental African-language bridge (Phase 6D). Disabled by default; the
+# stable product path is English RAG. No cloud APIs: translation only works
+# when a local NLLB CTranslate2 model directory is present.
+FEATURE_AFRICAN_LANG = os.getenv("FEATURE_AFRICAN_LANG", "false").lower() == "true"
+NLLB_CT2_DIR = Path(os.getenv("NLLB_CT2_DIR", MODEL_DIR / "nllb-ct2")).expanduser()
+NLLB_TOKENIZER_DIR = Path(os.getenv("NLLB_TOKENIZER_DIR", MODEL_DIR / "nllb-tokenizer")).expanduser()

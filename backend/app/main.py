@@ -10,7 +10,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.chunking import chunk_documents
-from app.config import DEFAULT_INDEX_NAME, INDEX_DIR, MODEL_PATH, SAMPLE_DOCS_DIR, TOP_K
+from app.config import DEFAULT_INDEX_NAME, FEATURE_AFRICAN_LANG, INDEX_DIR, MODEL_PATH, SAMPLE_DOCS_DIR, TOP_K
+from app.language_bridge import get_bridge
 from app.document_loader import load_documents
 from app.embeddings import EmbeddingModel
 from app.llm import LlamaCppLLM, ModelNotFoundError
@@ -208,15 +209,11 @@ def api_load_index(index_name: str) -> dict:
     }
 
 
-@app.post("/chat")
-async def chat(request: ChatRequest) -> dict:
-    global last_query_latency_ms
-    started = time.perf_counter()
-
-    calc_result = try_calculate(request.question)
+def answer_english(question: str, top_k: int) -> dict:
+    """The stable English path: deterministic calculator first, then RAG."""
+    calc_result = try_calculate(question)
     if calc_result is not None:
-        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
-        return {**calc_result, "latency_ms": last_query_latency_ms}
+        return calc_result
 
     store = load_cached_store()
     if not store or not store.ready:
@@ -224,15 +221,30 @@ async def chat(request: ChatRequest) -> dict:
 
     try:
         assistant = RAGAssistant(store, get_embedder(), get_llm())
-        result = assistant.answer(request.question, top_k=request.top_k)
+        return assistant.answer(question, top_k=top_k)
     except ModelNotFoundError as exc:
-        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except RuntimeError as exc:
-        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
         raise HTTPException(status_code=503, detail=str(exc)) from exc
 
-    last_query_latency_ms = int((time.perf_counter() - started) * 1000)
+
+@app.post("/chat")
+async def chat(request: ChatRequest) -> dict:
+    global last_query_latency_ms
+    started = time.perf_counter()
+
+    try:
+        result = None
+        if FEATURE_AFRICAN_LANG:
+            result = get_bridge().process(
+                request.question,
+                lambda english_question: answer_english(english_question, request.top_k),
+            )
+        if result is None:
+            result = answer_english(request.question, request.top_k)
+    finally:
+        last_query_latency_ms = int((time.perf_counter() - started) * 1000)
+
     return {**result, "latency_ms": last_query_latency_ms}
 
 

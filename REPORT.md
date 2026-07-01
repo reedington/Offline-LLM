@@ -208,6 +208,17 @@ The submission pairs document AI with **SME finance and business operations**, a
 - **Hallucination reduction.** Deterministic calculation removes the main hallucination surface for numeric questions: results come from audited arithmetic, not sampled tokens, and every calculated answer shows its work in the evidence panel as `Calculation:` / `Formula:` / `Inputs:` lines, so a judge or user can re-verify each number by hand.
 - **Answer format.** Document questions keep the standard Answer/Evidence format with document quotes; calculator questions keep the same structure but cite the deterministic calculator as the evidence source.
 
+## Experimental African-Language Bridge (Phase 6D)
+
+**Status: experimental and disabled by default.** The stable, submitted product path is English RAG. `metadata.json` keeps `african_alpha_claim: false` and `language_scope: ["en"]`, and neither claim changes until measured tests pass with a real local translation model.
+
+- **Feature flag:** `FEATURE_AFRICAN_LANG` (default `false`). With the flag off, the bridge is never constructed (enforced by `tests/test_african_language_bridge.py`) and the English path is byte-for-byte unchanged.
+- **Architecture:** African-language query → heuristic language detection (Yoruba, Hausa, Swahili) → local translation of the query to English → the existing English calculator/RAG pipeline with document evidence → optional translation of the answer back to the user's language. Evidence always comes from the English document store, so grounding and abstention behavior are preserved.
+- **Translation:** NLLB running locally through CTranslate2 int8 (`backend/app/language_bridge.py`), loaded lazily so the default product never pays its memory cost. No cloud APIs. If the local NLLB model directories (`NLLB_CT2_DIR`, `NLLB_TOKENIZER_DIR`) are absent, the bridge reports itself unavailable and questions take the standard English path.
+- **Eval set:** `data/eval/african_language_questions.json` — Yoruba, Hausa, and Swahili questions mirroring the English SME eval intents.
+- **Tested today (without model weights):** language detection on the eval set, query bridging and grounding with a stub translator, and the disabled path. **Not yet measured:** real NLLB translation quality and memory under the 7 GB budget.
+- **Claim policy:** set `african_alpha_claim: true` and extend `language_scope` **only after** the bridge passes measured tests with the real local NLLB model, including memory staying below the safe product target on the Ubuntu 7 GB gate.
+
 ## Retrieval Strategy
 
 Documents are chunked into approximately 350-token windows with 50-token overlap. Chunks are embedded locally with Sentence Transformers and stored in `indexes/default`. Retrieval uses top-k = 3 by default with FAISS when available and a NumPy similarity fallback otherwise.
@@ -220,9 +231,8 @@ The prompt requires answers only from retrieved context and forbids hidden reaso
 
 ## Known v1 Limitations
 
-- English only
-- No NLLB
-- NLLB remains future v1.5 work after English RAG is stable
+- English only in the stable path (the Phase 6D African-language bridge is experimental and off by default)
+- No NLLB in the product path; local NLLB/CTranslate2 is used only by the disabled-by-default bridge when its model files are present
 - No fine-tuning
 - No LightRAG
 - No OCR for scanned PDFs
