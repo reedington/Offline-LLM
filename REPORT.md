@@ -178,6 +178,7 @@ Run via `./scripts/run_adtc_profiler_participant.sh` (`adtc-profiler 0.1.0`, sch
 - **CPU p99:** 15.2%; **throttled:** false
 - **Model info:** architecture `qwen2`, `params_match: true` (GGUF fraud check passed)
 - **Accuracy:** `[]` (skipped in participant mode)
+- **Re-run after Phase 6A metadata fixes (same day, same machine):** 103.6 tok/s, 398 ms first-token latency, 1150 MB peak RSS, throttled false — confirming the profiler accepts the finalized `metadata.json` (github_handle and cross-disciplinary pairing filled).
 
 ### Pending
 

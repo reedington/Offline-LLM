@@ -2,7 +2,7 @@
 
 An English-only, offline document RAG assistant for SMEs. It runs as a polished local web app with a React + Vite + Tailwind frontend and a FastAPI backend. It loads PDF/TXT business documents, builds a cached local vector index, retrieves evidence, and answers using a small GGUF model through `llama-cpp-python`.
 
-Current phase: English RAG backend integration with product-level benchmarking and live metrics. The app is intentionally v1-simple: no NLLB, no fine-tuning, no LightRAG, no agents, and no cloud APIs in the product path.
+Current phase: Gate 1 hardening — deterministic SME finance tools, finalized submission metadata, and a Ubuntu 22.04 / 7 GB validation harness. The app is intentionally v1-simple: no fine-tuning, no LightRAG, no agents, and no cloud APIs in the product path; NLLB appears only in the disabled-by-default experimental language bridge.
 
 ## What It Does
 
@@ -14,7 +14,25 @@ Current phase: English RAG backend integration with product-level benchmarking a
 - Generate grounded answers with evidence citations.
 - Abstain when the answer is not supported:
   `I do not know based on the provided documents.`
+- Answer SME finance questions (profit, margin, discount, invoice total, VAT,
+  payment due dates, late payments) with deterministic calculators — the
+  language model never does arithmetic, and calculated answers show their
+  Calculation / Formula / Inputs as evidence.
 - Run a small product benchmark for latency, memory, and output-format checks.
+
+## Target Hardware Validation
+
+The ADTC target is Ubuntu 22.04, CPU-only, with a hard 7 GB RAM ceiling. A
+reproducible validation harness lives in `docker/Dockerfile.ubuntu22` and
+`scripts/run_ubuntu_memory_gate.sh`; see `docs/ubuntu_7gb_validation.md`.
+Model comparison procedure: `docs/model_comparison.md`.
+
+## Experimental African-Language Bridge
+
+Disabled by default. Setting `FEATURE_AFRICAN_LANG=true` enables a
+Yoruba/Hausa/Swahili → English bridge that uses a local NLLB (CTranslate2
+int8) model when present — no cloud APIs. The English RAG path is unchanged
+while the flag is off. See the Phase 6D section of `REPORT.md`.
 
 ## Setup
 
