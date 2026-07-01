@@ -1,0 +1,14 @@
+# Never bake model weights into the validation image; mount them at runtime.
+models/
+*.gguf
+
+# Local-only artifacts.
+.git/
+.venv/
+.pytest_cache/
+**/__pycache__/
+frontend/node_modules/
+frontend/dist/
+reports/*.json
+.claude/
+.dockerignore

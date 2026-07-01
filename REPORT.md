@@ -186,6 +186,18 @@ Run via `./scripts/run_adtc_profiler_participant.sh` (`adtc-profiler 0.1.0`, sch
 
 Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; internal and profiler numbers above are measured. **Honesty note:** `african_alpha_claim` is set to `false` because the app is currently English-only. African-language support is in the design pipeline (future NLLB work) and the claim should only flip to `true` once that capability actually exists. `model.packaging` is `binary_bundle` (no Dockerfile in the repo).
 
+## Target Hardware Validation (Phase 6B)
+
+All numbers recorded so far — including the official profiler run above — were measured on an Apple M4 Pro with 24 GB RAM. Those are useful signals but **not** final proof for the ADTC target (Ubuntu 22.04, CPU-only i5/Ryzen 5, hard 7 GB RAM ceiling where exceeding it means disqualification).
+
+Phase 6B adds a reproducible target-like validation harness:
+
+- `docker/Dockerfile.ubuntu22` — validation-only Ubuntu 22.04 image; CPU-only `llama-cpp-python` built from source, no Metal assumptions, no model weights baked in (GGUF is mounted at runtime).
+- `scripts/run_ubuntu_memory_gate.sh` — runs the test suite, the internal model benchmark, and the product benchmark, then reads the recorded RSS values and fails clearly if any peak exceeds the thresholds: 6000 MB product-peak gate (configurable via `PRODUCT_PEAK_THRESHOLD_MB`) and the 7000 MB ADTC danger line (`DANGER_THRESHOLD_MB`).
+- `docs/ubuntu_7gb_validation.md` — how to build and run under a hard cap with `docker build -f docker/Dockerfile.ubuntu22 ...` and `docker run --memory=7g --memory-swap=7g ...`.
+
+**Ubuntu validation result: TBD** — not yet run under the 7 GB cap. The Mac-measured model/runtime RSS (~1.2 GB) and product RSS (~2 GB) suggest comfortable headroom, but no target claim is made until the gate has actually passed on Ubuntu, ideally x86_64.
+
 ## Cross-Disciplinary Integration (Phase 6A)
 
 The submission pairs document AI with **SME finance and business operations**, and the pairing is load-bearing, not decorative:

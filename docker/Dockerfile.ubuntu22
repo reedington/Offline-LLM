@@ -1,0 +1,35 @@
+# Validation-only image: reproduces the ADTC target environment
+# (Ubuntu 22.04, CPU-only, no Metal/Mac acceleration) so the app can be
+# exercised under a 7 GB memory ceiling with `docker run --memory=7g`.
+#
+# This image is NOT the submission packaging (metadata.json declares
+# `binary_bundle`). It never contains model weights: mount the GGUF at
+# runtime, e.g.  -v "$PWD/models:/app/models:ro"
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-venv \
+        python3-pip \
+        build-essential \
+        cmake \
+        git \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# llama-cpp-python compiles from source here: CPU-only by default on
+# Ubuntu, which is exactly the integrated-graphics target behavior.
+COPY requirements.txt ./
+RUN python3 -m pip install -r requirements.txt
+
+COPY . .
+
+ENV MODEL_PATH=/app/models/model.gguf
+
+CMD ["./scripts/run_ubuntu_memory_gate.sh"]
