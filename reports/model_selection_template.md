@@ -9,13 +9,13 @@ Sources:
 - Product RSS / product benchmark result → `reports/product_smoke_test.json`
 - ADTC profiler report path → `reports/submission.json` (participant mode)
 
-| Model | Quantization | File path | Load success | Load time | Product RSS | Peak RSS | Tokens/sec | First-token latency | Product benchmark result | ADTC profiler report path | Notes | Decision |
-|-------|--------------|-----------|--------------|-----------|-------------|----------|------------|---------------------|--------------------------|---------------------------|-------|----------|
-| Qwen2.5-1.5B-Instruct | Q4_K_M | models/model.gguf | Yes | 11.7 s | 2046 MB (full app) | 1209 MB (profiler, model-only) | 106.9 (profiler) | 388 ms (profiler) | 10/10 behaviors correct (6/6 answerable, 2/2 abstention, 2/2 calculator) | reports/submission.json (participant, --skip-accuracy) | Profiler run 2026-07-01 on Apple M4 Pro; params_match=true, throttled=false | leading candidate |
-| Llama-3.2-1B-Instruct | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Smaller alternative | TBD |
-| SmolLM2-1.7B-Instruct | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | On-device alternative | TBD |
-| Gemma-2-2B-it | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Larger 2B; watch RAM/speed | TBD |
-| Llama-3.2-3B-Instruct | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Only if headroom allows | TBD |
+| Model | Quantization | Load success | Load time | Official profiler TPS | First-token latency (profiler) | Model-only RSS (profiler) | Product RSS (full app) | Behavior correctness | Thermal / throttle | ADTC profiler report path | Notes | Decision |
+|-------|--------------|--------------|-----------|-----------------------|--------------------------------|---------------------------|------------------------|----------------------|--------------------|---------------------------|-------|----------|
+| Qwen2.5-1.5B-Instruct | Q4_K_M | Yes | 11.7 s | 106.9 tok/s | 388 ms | 1209 MB peak | 2046 MB peak | 10/10 behaviors correct (6/6 answerable, 2/2 abstention, 2/2 calculator) | CPU p99 15.2%, throttled=false | reports/submission.json (participant, --skip-accuracy) | Profiler run 2026-07-01 on Apple M4 Pro; params_match=true | leading candidate |
+| Llama-3.2-1B-Instruct | Q4_K_M | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Smaller/faster baseline — is Qwen worth the extra size? | TBD |
+| SmolLM2-1.7B-Instruct | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | On-device alternative | TBD |
+| Gemma-2-2B-it | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Larger 2B; watch RAM/speed | TBD |
+| Llama-3.2-3B-Instruct | Q4 | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Do not test until Ubuntu 7 GB validation passes | TBD |
 
 ## Measured notes
 
@@ -41,3 +41,18 @@ Sources:
   memory, speed, and thermal cost.
 - RAM ceiling: 7 GB. Safe product peak target: 5.5–6 GB.
 - A profiler pass is never claimed unless the profiler has actually been run.
+
+### Qwen2.5-1.5B vs Llama-3.2-1B decision rule
+
+The current comparison question is: **is Qwen 1.5B worth the extra size versus
+a faster 1B baseline?** Rule, applied only after both rows above hold real
+measured values (see `docs/model_comparison.md` for the procedure):
+
+- **Keep Qwen2.5-1.5B** if its accuracy/behavior is clearly better (product
+  benchmark behaviors, Answer/Evidence discipline, abstention correctness) and
+  its RAM and tokens/sec remain safely inside budget.
+- **Switch to Llama-3.2-1B** only if Qwen's quality advantage is small **and**
+  the 1B is meaningfully faster and/or lighter (speed is 30% of the ADTC
+  score, scored relative to the fastest submission).
+- **Do not test 3B-class models** until the Ubuntu 22.04 / 7 GB validation
+  gate (`docs/ubuntu_7gb_validation.md`) has actually passed.
