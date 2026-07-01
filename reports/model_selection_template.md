@@ -11,7 +11,7 @@ Sources:
 
 | Model | Quantization | File path | Load success | Load time | Product RSS | Peak RSS | Tokens/sec | First-token latency | Product benchmark result | ADTC profiler report path | Notes | Decision |
 |-------|--------------|-----------|--------------|-----------|-------------|----------|------------|---------------------|--------------------------|---------------------------|-------|----------|
-| Qwen2.5-1.5B-Instruct | Q4_K_M | models/model.gguf | Yes | 11.7 s | 2046 MB | 2046 MB | 18–56 (prompt-avg) | not measured | 10/10 behaviors correct (6/6 answerable, 2/2 abstention, 2/2 calculator) | pending (run ./scripts/run_adtc_profiler_participant.sh) | First candidate; internal benchmark only, ADTC profiler not yet run | leading candidate, pending profiler |
+| Qwen2.5-1.5B-Instruct | Q4_K_M | models/model.gguf | Yes | 11.7 s | 2046 MB (full app) | 1209 MB (profiler, model-only) | 106.9 (profiler) | 388 ms (profiler) | 10/10 behaviors correct (6/6 answerable, 2/2 abstention, 2/2 calculator) | reports/submission.json (participant, --skip-accuracy) | Profiler run 2026-07-01 on Apple M4 Pro; params_match=true, throttled=false | leading candidate |
 | Llama-3.2-1B-Instruct | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Smaller alternative | TBD |
 | SmolLM2-1.7B-Instruct | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | On-device alternative | TBD |
 | Gemma-2-2B-it | Q4 | models/model.gguf | TBD | TBD | TBD | TBD | TBD | TBD | TBD | TBD | Larger 2B; watch RAM/speed | TBD |
@@ -24,11 +24,15 @@ Sources:
   not the official profiler.
 - **Tokens/sec** is a per-prompt average from the internal model benchmark
   (range across the three prompts), not an official steady-state throughput.
-- **First-token latency** is "not measured": the internal benchmark records full
-  prompt latency, not time-to-first-token. Use the ADTC profiler for that.
-- **Peak RSS** is the process RSS after generation (~2046 MB), comfortably under
-  the 7 GB ceiling and the 5.5–6 GB safe target.
-- The ADTC profiler has **not** been run yet, so no profiler pass is claimed.
+- **First-token latency** (388 ms) and **official tokens/sec** (106.9) come from
+  the ADTC profiler's `llama-bench` run — the internal benchmark cannot measure
+  time-to-first-token.
+- **Peak RSS** has two honest readings: ~2046 MB from the full-app product
+  benchmark (embeddings + RAG + model) and ~1209 MB from the profiler
+  (model/runtime only). Both are under the 7 GB ceiling and the 5.5–6 GB target.
+- The ADTC profiler participant run was executed on 2026-07-01 (Apple M4 Pro)
+  with `--skip-accuracy`, so `accuracy: []`. GGUF fraud check passed
+  (`params_match: true`). Report: `reports/submission.json`.
 
 ## Decision policy
 

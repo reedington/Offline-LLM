@@ -168,11 +168,23 @@ Local run on Apple Silicon (`llama-cpp-python` 0.3.32). Internal artifacts only 
 - **First-token latency:** not measured (the internal benchmark records full prompt latency, not time-to-first-token; use the profiler for this)
 - **Product benchmark:** 10/10 behaviors correct — 6/6 answerable answered with Answer/Evidence, 2/2 unanswerable returned the exact abstention phrase, 2/2 calculator handled deterministically (`reports/product_smoke_test.json`)
 
+### Official ADTC profiler (participant mode, Qwen2.5-1.5B-Instruct Q4_K_M, 2026-07-01)
+
+Run via `./scripts/run_adtc_profiler_participant.sh` (`adtc-profiler 0.1.0`, schema 1.0.0) on Apple M4 Pro / 24 GB / macOS, `--skip-accuracy`. Report: `reports/submission.json` (gitignored internal artifact).
+
+- **Tokens/sec (generation):** 106.9
+- **First-token latency:** 388 ms
+- **Peak RSS (model/runtime only):** 1209 MB; steady-state 1172 MB
+- **CPU p99:** 15.2%; **throttled:** false
+- **Model info:** architecture `qwen2`, `params_match: true` (GGUF fraud check passed)
+- **Accuracy:** `[]` (skipped in participant mode)
+
 ### Pending
 
-- **ADTC profiler values:** TBD (`reports/submission.json`) — run `./scripts/run_adtc_profiler_participant.sh`
+- **Audit-mode / accuracy run:** TBD — run `./scripts/run_adtc_profiler_audit.sh` (needs `lm_eval`) and `./scripts/compare_adtc_reports.sh`.
+- **metadata.json identity fields:** `submitter.github_handle` and `cross_disciplinary_pairing` still hold `TODO_` placeholders and must be filled by the team before any real submission.
 
-Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; internal numbers above are measured, and profiler values remain `TBD` until the profiler is actually run.
+Constraints for this phase: do not start with 7B, do not use fp16, prefer Q4 first. We choose the smallest model that clears the accuracy bar and only move larger if the measured accuracy gain justifies the memory, speed, and thermal cost. No values are invented; internal and profiler numbers above are measured. **Honesty note:** `african_alpha_claim` is set to `false` because the app is currently English-only. African-language support is in the design pipeline (future NLLB work) and the claim should only flip to `true` once that capability actually exists. `model.packaging` is `binary_bundle` (no Dockerfile in the repo).
 
 ## Retrieval Strategy
 

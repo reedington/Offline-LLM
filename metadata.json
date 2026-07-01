@@ -1,13 +1,41 @@
 {
-  "team": "offline-sme-ai-assistant",
-  "model_name": "PLACEHOLDER_SMALL_GGUF_MODEL",
-  "model_path": "models/model.gguf",
-  "model_format": "GGUF",
-  "runtime": "llama.cpp / llama-cpp-python",
-  "task": "offline SME document RAG assistant",
-  "version": "0.4.0",
-  "submission_type": "offline-rag-app",
-  "hardware_target": "local CPU laptop, no GPU required",
-  "ram_budget_gb": 7,
-  "notes": "Place the GGUF model at models/model.gguf before profiling. Model name and parameter count are placeholders until the final model is chosen by measured benchmarks."
+  "team_id": "offline-sme-ai-assistant",
+  "domain": "corporate_enterprise",
+  "language_scope": ["en"],
+  "african_alpha_claim": false,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "Gideon Adeleke",
+    "email": "fikkyfresh81@gmail.com",
+    "github_handle": "TODO_SET_GITHUB_HANDLE"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "TODO_SET_DISCIPLINE",
+    "load_bearing": false,
+    "description": "TODO_DESCRIBE_CROSS_DISCIPLINARY_PAIRING"
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "p1",
+      "prompt": "What is the payment period in the supplier agreement?"
+    },
+    {
+      "prompt_id": "p2",
+      "prompt": "How long do customers have to return unopened retail items?"
+    }
+  ],
+  "model": {
+    "name": "Qwen2.5-1.5B-Instruct",
+    "runtime": "llama.cpp / llama-cpp-python",
+    "quantization": "Q4_K_M",
+    "parameters_estimate": "1.5B",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "models/model.gguf",
+    "model_format": "GGUF",
+    "hardware_target": "local CPU laptop, no GPU required",
+    "ram_budget_gb": 7,
+    "notes": "Operational block (underscore-prefixed) consumed by the ADTC profiler; stripped from the validated submission section. Place the GGUF model at models/model.gguf before profiling."
+  }
 }

@@ -75,8 +75,31 @@ def test_adtc_scripts_exist_and_are_executable():
 
 def test_metadata_contains_model_path():
     metadata = json.loads((PROJECT_ROOT / "metadata.json").read_text(encoding="utf-8"))
-    assert metadata["model_path"] == "models/model.gguf"
-    assert metadata["model_format"] == "GGUF"
+    # The ADTC profiler reads the model path from the operational `_runtime`
+    # block and strips it before validating the submission schema.
+    assert metadata["_runtime"]["model_path"] == "models/model.gguf"
+    assert metadata["_runtime"]["model_format"] == "GGUF"
+
+
+def test_metadata_matches_profiler_submission_schema_shape():
+    metadata = json.loads((PROJECT_ROOT / "metadata.json").read_text(encoding="utf-8"))
+    # Required top-level submission keys expected by the official ADTC profiler.
+    for key in (
+        "team_id",
+        "domain",
+        "language_scope",
+        "african_alpha_claim",
+        "budget_laptop_claim",
+        "submitter",
+        "cross_disciplinary_pairing",
+        "test_prompts",
+        "model",
+    ):
+        assert key in metadata, f"missing submission key: {key}"
+    assert len(metadata["test_prompts"]) == 2
+    assert metadata["model"]["quantization"] == "Q4_K_M"
+    for key in ("name", "email", "github_handle"):
+        assert key in metadata["submitter"]
 
 
 def test_benchmark_template_is_valid_json():
