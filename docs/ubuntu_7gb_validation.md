@@ -76,11 +76,75 @@ On a real Ubuntu 22.04 laptop (the most faithful validation), skip Docker:
 
 The script uses `.venv/bin/python` when present, `python3` otherwise.
 
+## Validation status and architecture
+
+Two levels of proof, recorded separately in `REPORT.md`:
+
+- **arm64 container run — PASS (2026-07-03).** Docker on Apple Silicon runs
+  arm64 Ubuntu. This validates Linux/container/memory discipline: the Ubuntu
+  22.04 environment, CPU-only llama.cpp built from source, the full test
+  suite, both benchmarks, and RSS peaks (product 1312 MB, model 1242 MB)
+  under a hard 7 GB cap with swap disabled — no OOM, no crash. Do not
+  overwrite or re-record this result when adding x86 numbers.
+- **x86_64 run — TBD.** The ADTC Standard Laptop is x86 (Intel i5 / AMD
+  Ryzen 5), so the final hardware-alignment proof must come from one of the
+  x86 paths below.
+
+## 4. x86 validation
+
+### Option A: real x86 Ubuntu 22.04 machine (preferred)
+
+On an actual i5/Ryzen-class laptop — this is the only path that also produces
+meaningful speed/thermal signals:
+
+```bash
+git clone https://github.com/reedington/Offline-LLM.git && cd Offline-LLM
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+# place the GGUF at models/model.gguf, then:
+./scripts/run_ubuntu_memory_gate.sh
+```
+
+To reproduce the hard 7 GB ceiling on bare metal (cgroup cap, swap denied,
+same OOM-kill semantics as the container run):
+
+```bash
+systemd-run --scope -p MemoryMax=7G -p MemorySwapMax=0 \
+  ./scripts/run_ubuntu_memory_gate.sh
+```
+
+### Option B: Docker linux/amd64 emulation fallback
+
+From the Apple Silicon dev machine, force an x86 image (QEMU/Rosetta
+emulation):
+
+```bash
+docker build --platform linux/amd64 \
+  -f docker/Dockerfile.ubuntu22 -t adtc-ubuntu22-validation-amd64 .
+
+docker run --rm --platform linux/amd64 \
+  --memory=7g --memory-swap=7g --cpus=4 \
+  -v "$PWD/models:/app/models:ro" \
+  -v "$PWD/reports:/app/reports" \
+  -v "$HOME/.cache/huggingface:/root/.cache/huggingface:ro" \
+  adtc-ubuntu22-validation-amd64
+```
+
+Caveats for Option B:
+
+- The build is much slower (llama-cpp-python compiles under emulation) and
+  the run may take tens of minutes.
+- **Memory and correctness results are valid; speed numbers are not.**
+  Emulated tokens/sec says nothing about a real i5/Ryzen — never record
+  emulated throughput as a performance claim.
+- If the emulated run passes the memory gate, record it as
+  "x86 (emulated) PASS" and still seek an Option A run before final
+  submission.
+
 ## Honesty rules
 
-- Do not claim Ubuntu validation passed until this gate has actually been run
-  under the memory cap; `REPORT.md` records the result as TBD until then.
-- Docker on Apple Silicon runs arm64 Ubuntu by default. That validates the
-  memory ceiling and CPU-only inference path, but final proof should come from
-  an x86_64 run (`--platform linux/amd64`, or a real i5/Ryzen laptop) since
-  the ADTC target is x86.
+- Do not claim a validation level passed until that gate has actually been
+  run under the memory cap; `REPORT.md` records each level (arm64, x86) as
+  TBD until then.
+- arm64 PASS validates Linux/container/memory discipline; x86 is the final
+  hardware-alignment proof. Neither substitutes for the other.

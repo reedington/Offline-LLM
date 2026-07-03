@@ -221,6 +221,8 @@ Phase 6B adds a reproducible target-like validation harness:
 
 Caveat: Docker on Apple Silicon runs arm64 Ubuntu, so this validates the memory ceiling, Linux environment, and CPU-only inference path — final proof on x86 still requires a real i5/Ryzen laptop or an `--platform linux/amd64` run. In-container generation speed (~8–28 tok/s across the benchmark prompts on 4 CPUs) is not comparable to the official profiler numbers and is recorded only as evidence the app works on target-like resources.
 
+**x86 Ubuntu validation: TBD.** The arm64 PASS above validates Linux/container/memory discipline; the x86 run is the final hardware-alignment proof since the ADTC Standard Laptop is Intel i5 / AMD Ryzen 5. Commands for both paths (real x86 Ubuntu machine, preferred; `--platform linux/amd64` emulation fallback, memory-valid but speed-meaningless) are in `docs/ubuntu_7gb_validation.md`. The arm64 result stands on its own and is not superseded by the x86 run.
+
 ## Cross-Disciplinary Integration (Phase 6A)
 
 The submission pairs document AI with **SME finance and business operations**, and the pairing is load-bearing, not decorative:
