@@ -212,7 +212,14 @@ Phase 6B adds a reproducible target-like validation harness:
 - `scripts/run_ubuntu_memory_gate.sh` — runs the test suite, the internal model benchmark, and the product benchmark, then reads the recorded RSS values and fails clearly if any peak exceeds the thresholds: 6000 MB product-peak gate (configurable via `PRODUCT_PEAK_THRESHOLD_MB`) and the 7000 MB ADTC danger line (`DANGER_THRESHOLD_MB`).
 - `docs/ubuntu_7gb_validation.md` — how to build and run under a hard cap with `docker build -f docker/Dockerfile.ubuntu22 ...` and `docker run --memory=7g --memory-swap=7g ...`.
 
-**Ubuntu validation result: TBD** — not yet run under the 7 GB cap. The Mac-measured model/runtime RSS (~1.2 GB) and product RSS (~2 GB) suggest comfortable headroom, but no target claim is made until the gate has actually passed on Ubuntu, ideally x86_64.
+**Ubuntu validation result: PASS (2026-07-03, arm64).** The gate ran inside the Ubuntu 22.04 container under a hard cap (`docker run --memory=7g --memory-swap=7g --cpus=4`, swap disabled so a breach OOM-kills, CPU-only llama.cpp compiled from source, models and HF cache mounted read-only):
+
+- Test suite: 74 passed, 1 skipped (profiler schema test — profiler not installed in the image)
+- Product benchmark: 10/10 behaviors correct in-container; peak RSS **1312 MB**
+- Model benchmark: completed; peak RSS **1242 MB**
+- No OOM kill, no crash; both peaks far under the 6000 MB gate threshold and 7000 MB danger line
+
+Caveat: Docker on Apple Silicon runs arm64 Ubuntu, so this validates the memory ceiling, Linux environment, and CPU-only inference path — final proof on x86 still requires a real i5/Ryzen laptop or an `--platform linux/amd64` run. In-container generation speed (~8–28 tok/s across the benchmark prompts on 4 CPUs) is not comparable to the official profiler numbers and is recorded only as evidence the app works on target-like resources.
 
 ## Cross-Disciplinary Integration (Phase 6A)
 

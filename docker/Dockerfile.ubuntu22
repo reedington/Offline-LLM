@@ -9,6 +9,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_NO_CACHE_DIR=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
     PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,6 +18,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3-pip \
         build-essential \
         cmake \
+        ninja-build \
+        pkg-config \
         git \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -25,8 +28,12 @@ WORKDIR /app
 
 # llama-cpp-python compiles from source here: CPU-only by default on
 # Ubuntu, which is exactly the integrated-graphics target behavior.
+# torch is installed first from the CPU-only index: the default Linux wheels
+# pull multi-hundred-MB NVIDIA CUDA dependencies that a no-discrete-GPU
+# target must not have.
 COPY requirements.txt ./
-RUN python3 -m pip install -r requirements.txt
+RUN python3 -m pip install --retries 10 torch --index-url https://download.pytorch.org/whl/cpu \
+    && python3 -m pip install --retries 10 -r requirements.txt
 
 COPY . .
 
