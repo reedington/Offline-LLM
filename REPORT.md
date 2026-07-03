@@ -221,7 +221,15 @@ Phase 6B adds a reproducible target-like validation harness:
 
 Caveat: Docker on Apple Silicon runs arm64 Ubuntu, so this validates the memory ceiling, Linux environment, and CPU-only inference path — final proof on x86 still requires a real i5/Ryzen laptop or an `--platform linux/amd64` run. In-container generation speed (~8–28 tok/s across the benchmark prompts on 4 CPUs) is not comparable to the official profiler numbers and is recorded only as evidence the app works on target-like resources.
 
-**x86 Ubuntu validation: TBD.** The arm64 PASS above validates Linux/container/memory discipline; the x86 run is the final hardware-alignment proof since the ADTC Standard Laptop is Intel i5 / AMD Ryzen 5. Commands for both paths (real x86 Ubuntu machine, preferred; `--platform linux/amd64` emulation fallback, memory-valid but speed-meaningless) are in `docs/ubuntu_7gb_validation.md`. The arm64 result stands on its own and is not superseded by the x86 run.
+**x86 emulated PASS (2026-07-03) — real x86 hardware run still TBD.** The Option B emulated run (`docker build/run --platform linux/amd64`, same hard cap: `--memory=7g --memory-swap=7g --cpus=4`, swap disabled) completed with `RESULT: PASS`:
+
+- Test suite: 74 passed, 1 skipped (same expected skip as arm64)
+- Memory gate: product peak RSS **1933 MB**, model benchmark peak **1851 MB** — both OK, well under the 6000 MB threshold (higher than the arm64 peaks, consistent with emulation overhead)
+- No OOM kill, no crash
+- Product behaviors: **9/10** in this run — q003 ("What must BrightMart provide when reporting damaged goods?") falsely abstained under emulation, where the same question passes 10/10 on arm64 and macOS. The failure mode is conservative (abstention, not hallucination) and is most plausibly a borderline generation flipping under cross-architecture floating-point differences; worth re-checking on real x86 hardware.
+- **No emulated speed numbers are recorded** — QEMU-emulated tokens/sec says nothing about a real i5/Ryzen.
+
+This is an emulated PASS for memory and environment discipline, **not** a real-hardware PASS. The arm64 PASS above stands on its own. Final hardware-alignment proof remains an Option A run on a physical x86 Ubuntu 22.04 machine (`docs/ubuntu_7gb_validation.md`).
 
 ## Cross-Disciplinary Integration (Phase 6A)
 
