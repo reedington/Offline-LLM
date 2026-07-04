@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.config import LLM_CTX, LLM_THREADS, MODEL_PATH
+from src.prompts import SYSTEM_INSTRUCTIONS as SYSTEM_PROMPT
 
 
 class ModelNotFoundError(FileNotFoundError):
@@ -15,13 +16,21 @@ class LlamaCppLLM:
         model_path: Path = MODEL_PATH,
         n_ctx: int = LLM_CTX,
         n_threads: int = LLM_THREADS,
-        temperature: float = 0.1,
+        # Greedy decoding: temperature 0.1 sampling let borderline generations
+        # flip across architectures (q003 falsely abstained under x86
+        # emulation while passing on arm64/macOS). Grounding and abstention
+        # come from the prompt and retrieval threshold, not from sampling.
+        temperature: float = 0.0,
     ):
         self.model_path = Path(model_path)
         self.n_ctx = n_ctx
         self.n_threads = n_threads
         self.temperature = temperature
         self._llm = None
+
+    @property
+    def loaded(self) -> bool:
+        return self._llm is not None
 
     def _load(self):
         if self._llm is not None:
@@ -34,22 +43,44 @@ class LlamaCppLLM:
         try:
             from llama_cpp import Llama
         except ImportError as exc:
-            raise RuntimeError("Install llama-cpp-python to run local GGUF inference.") from exc
+            raise RuntimeError("llama-cpp-python is required for local GGUF inference.") from exc
 
         self._llm = Llama(
             model_path=str(self.model_path),
             n_ctx=self.n_ctx,
             n_threads=self.n_threads,
+            seed=42,
             verbose=False,
         )
         return self._llm
 
     def generate(self, prompt: str, max_tokens: int = 512) -> str:
+        # Instruct models are prompted through their chat template: raw text
+        # completion is out-of-distribution for them and left q003-style
+        # borderline questions flipping between answer and abstention across
+        # runs/architectures. Prompts built by build_rag_prompt embed the
+        # system prompt, so it is split back out into the system role here.
         llm = self._load()
-        output = llm(
-            prompt,
-            max_tokens=max_tokens,
-            temperature=self.temperature,
-            stop=["\n\nQuestion:", "\n\nContext:"],
-        )
-        return output["choices"][0]["text"].strip()
+        if prompt.startswith(SYSTEM_PROMPT):
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT.strip()},
+                {"role": "user", "content": prompt[len(SYSTEM_PROMPT):].strip()},
+            ]
+        else:
+            messages = [{"role": "user", "content": prompt}]
+        try:
+            output = llm.create_chat_completion(
+                messages=messages,
+                max_tokens=max_tokens,
+                temperature=self.temperature,
+            )
+            return output["choices"][0]["message"]["content"].strip()
+        except Exception:
+            # GGUF without a usable chat template: fall back to raw completion.
+            output = llm(
+                prompt,
+                max_tokens=max_tokens,
+                temperature=self.temperature,
+                stop=["\n\nQuestion:", "\n\nContext:"],
+            )
+            return output["choices"][0]["text"].strip()

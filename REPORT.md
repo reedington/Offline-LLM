@@ -231,6 +231,18 @@ Caveat: Docker on Apple Silicon runs arm64 Ubuntu, so this validates the memory 
 
 This is an emulated PASS for memory and environment discipline, **not** a real-hardware PASS. The arm64 PASS above stands on its own. Final hardware-alignment proof remains an Option A run on a physical x86 Ubuntu 22.04 machine (`docs/ubuntu_7gb_validation.md`).
 
+### Phase 7C: q003 false abstention — investigated and fixed (2026-07-04)
+
+The 9/10 emulated result above was investigated to root cause and fixed; the earlier honest failure record is kept as-is above.
+
+- **Investigation.** Retrieval was never the problem: `python -m app.debug_retrieval` (new inspection tool) shows the supplier-agreement chunk ranking #1 for q003 (score 0.44 with real embeddings, 0.26 with the benchmark's hash embeddings — both far above the 0.05 abstention threshold). The failure was generation-side and reproducible deterministically: q003 answered correctly in isolation but abstained when run after q001/q002 on the same model instance, because llama.cpp's shared-prefix KV cache yields minutely different logits than a fresh evaluation — enough to flip a borderline decision. `temperature=0.1` sampling added run-to-run randomness on top (which is why macOS/arm64 happened to pass and x86 emulation happened to fail).
+- **Fix (no model change, no threshold change, no abstention weakening).** Two-part: greedy decoding (`temperature=0.0`, fixed seed) removes sampling randomness, and generation now goes through the model's **chat template** (`create_chat_completion` with system/user roles) instead of raw text completion, which is out-of-distribution for an instruct-tuned model and was what left q003 borderline in the first place. Raw completion remains as a fallback for GGUFs without a chat template. Validated before adoption: 6/6 answerable questions answer in-sequence and 2/2 unanswerable questions still return the exact abstention phrase.
+- **Results after the fix (all with q003 answering correctly):**
+  - macOS: product benchmark **10/10**, RSS ~2098 MB
+  - arm64 Ubuntu gate re-run: **PASS, 10/10**, product peak RSS 1314 MB, model peak 1246 MB
+  - x86 emulated gate re-run: **PASS, 10/10**, product peak RSS 1935 MB, model peak 1852 MB (still no emulated speed claims)
+- **Regression tests:** `tests/test_q003_behavior.py` pins q003 retrieval (source ranks first, clears the threshold), asserts non-abstention when the relevant document is indexed, and asserts greedy decoding stays the default.
+
 ## Cross-Disciplinary Integration (Phase 6A)
 
 The submission pairs document AI with **SME finance and business operations**, and the pairing is load-bearing, not decorative:
